@@ -11,6 +11,8 @@ def dockerFileName = ''
 def emailrecipient = "robokingmaster@gmail.com"
 
 pipeline {
+    agent any
+    
     parameters {        
         choice(
             name: 'DOCKER_IMAGE', 
