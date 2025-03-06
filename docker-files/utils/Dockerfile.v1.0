@@ -150,7 +150,7 @@ RUN ARCH=amd64 && \
     sudo mv /tmp/eksctl /usr/local/bin
 
 # Script To Start SSH Serivice As Container Starts
-COPY entrypoint.v6.0.sh /entrypoint.sh
+COPY entrypoint.v1.0.sh /entrypoint.sh
 
 # Creating Labops User Account
 RUN chmod 777 /entrypoint.sh \
