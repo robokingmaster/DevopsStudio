@@ -23,7 +23,7 @@ pipeline {
     }
 
     environment { 
-        DOCKER_HOST="tcp://localhost:2375"
+        DOCKER_HOST="tcp://0.0.0.0:2375"
     } 
 
     stages { 
@@ -54,40 +54,39 @@ pipeline {
             }   
         }
 
-        // stage ('Copying EntryPoint Script') {
-        //     steps {
-        //         print "Copying Docker Resources To Current Directory"
-        //         sh """
-        //             cp ${dockerFilePath}/*.sh .                    
-        //             chmod 777 *.sh                    
-        //         """
-        //     }
-        // }           
+        stage ('Copying EntryPoint Script') {
+            steps {
+                print "Copying Docker Resources To Current Directory"
+                sh """
+                    cp ${dockerFilePath}/*.sh . 
+                    chmod 777 *.sh 
+                """
+            }
+        }           
 
-        // stage ('Build Docker Image') {
-        //     steps {
-        //         script {
-        //             print "Building Docker Image"
-        //             sleep 20
-        //             app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
-        //         }
-        //     }
-        // }
+        stage ('Build Docker Image') {
+            steps {
+                script {
+                    print "Building Docker Image"                    
+                    app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
+                }
+            }
+        }
 
-        // stage ('Test Docker Image') {
-        //     steps {
-        //         script {
-        //             app.inside {            
-        //                 sh 'echo "Tests passed"'        
-        //             }
-        //         }
-        //     }
-        // }        
+        stage ('Test Docker Image') {
+            steps {
+                script {
+                    app.inside {
+                        sh 'echo "Tests passed"'
+                    }
+                }
+            }
+        }        
         
         // stage ('Push Built Image To Docker Hub') {
         //     steps {
         //         print "Pushing Docker Image To Docker Hub"
-        //         docker.withRegistry("${REPOSITORY_SERVER}", 'dockerRegistryCredentialsId') {            
+        //         docker.withDockerRegistry("${REPOSITORY_SERVER}", 'dockerRegistryCredentialsId') {            
         //             app.push("${env.BUILD_NUMBER}")            
         //             app.push("${params.TAG_VERSION}")        
         //         }
