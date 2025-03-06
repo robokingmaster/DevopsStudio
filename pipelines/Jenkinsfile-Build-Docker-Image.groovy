@@ -4,7 +4,6 @@
 def REPOSITORY_NAME = "robokingmaster"
 def REPOSITORY_SERVER = "https://registry.hub.docker.com" 
 
-def pod = "docker"
 def dockerImageName = ''
 def dockerFilePath = ''
 def dockerFileName = ''
@@ -12,10 +11,6 @@ def dockerFileName = ''
 def emailrecipient = "robokingmaster@gmail.com"
 
 pipeline {
-    agent {
-	   label "${pod}"
-	}
-
     parameters {        
         choice(
             name: 'DOCKER_IMAGE', 
@@ -63,45 +58,45 @@ pipeline {
             }   
         }
 
-        stage ('Copying EntryPoint Script') {
-            steps {
-                print "Copying Docker Resources To Current Directory"
-                sh """
-                    cp ${dockerFilePath}/*.sh .                    
-                    chmod 777 *.sh                    
-                """
-            }
-        }           
+        // stage ('Copying EntryPoint Script') {
+        //     steps {
+        //         print "Copying Docker Resources To Current Directory"
+        //         sh """
+        //             cp ${dockerFilePath}/*.sh .                    
+        //             chmod 777 *.sh                    
+        //         """
+        //     }
+        // }           
 
-        stage ('Build Docker Image') {
-            steps {
-                script {
-                    print "Building Docker Image"
-                    sleep 20
-                    app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
-                }
-            }
-        }
+        // stage ('Build Docker Image') {
+        //     steps {
+        //         script {
+        //             print "Building Docker Image"
+        //             sleep 20
+        //             app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
+        //         }
+        //     }
+        // }
 
-        stage ('Test Docker Image') {
-            steps {
-                script {
-                    app.inside {            
-                        sh 'echo "Tests passed"'        
-                    }
-                }
-            }
-        }        
+        // stage ('Test Docker Image') {
+        //     steps {
+        //         script {
+        //             app.inside {            
+        //                 sh 'echo "Tests passed"'        
+        //             }
+        //         }
+        //     }
+        // }        
         
-        stage ('Push Built Image To Docker Hub') {
-            steps {
-                print "Pushing Docker Image To Docker Hub"
-                docker.withRegistry("${REPOSITORY_SERVER}", 'dockerRegistryCredentialsId') {            
-                    app.push("${env.BUILD_NUMBER}")            
-                    app.push("${params.TAG_VERSION}")        
-                }
-            }
-        }
+        // stage ('Push Built Image To Docker Hub') {
+        //     steps {
+        //         print "Pushing Docker Image To Docker Hub"
+        //         docker.withRegistry("${REPOSITORY_SERVER}", 'dockerRegistryCredentialsId') {            
+        //             app.push("${env.BUILD_NUMBER}")            
+        //             app.push("${params.TAG_VERSION}")        
+        //         }
+        //     }
+        // }
     }
 
     post{
