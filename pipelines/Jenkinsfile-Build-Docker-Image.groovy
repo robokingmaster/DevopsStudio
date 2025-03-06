@@ -20,13 +20,7 @@ pipeline {
         string(name: 'TAG_VERSION', defaultValue: 'v1.0', description: 'Docker Image Version Tag')         
     }
 
-    options {
-        timestamps() // add some timestamps helpful for debugging performance
-        ansiColor('xterm') // colorfy the console
-    }
-
     environment { 
-        GIT_CREDS=credentials('bitbucket')        
         DOCKER_HOST="tcp://localhost:2375"
     } 
 
