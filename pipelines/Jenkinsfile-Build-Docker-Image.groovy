@@ -23,7 +23,7 @@ pipeline {
     }
 
     environment { 
-        DOCKER_HOST="tcp://0.0.0.0:2375"
+        DOCKER_HOST="tcp://127.0.0.1:2375"
     } 
 
     stages { 
