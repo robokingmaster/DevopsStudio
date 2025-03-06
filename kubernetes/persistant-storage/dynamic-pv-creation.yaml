@@ -1,5 +1,15 @@
 ---
-# Source: djangoapp/charts/postgresql/templates/statefulset.yaml
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+
+# To make this storage class as default set annotation
+# kubectl patch storageclass ebs-sc -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -53,7 +63,7 @@ spec:
       name: data-volume
       namespace: default
     spec:
-      storageClassName: gp3
+      storageClassName: ebs-sc
       accessModes: 
         - ReadWriteOnce
       resources:
