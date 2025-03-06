@@ -23,7 +23,8 @@ pipeline {
     }
 
     environment { 
-        DOCKER_HOST="tcp://127.0.0.1:2375"
+        DOCKER_HOST="tcp://localhost:2375"
+        DOCKER_BUILDKIT='1'
     } 
 
     stages { 
@@ -34,7 +35,7 @@ pipeline {
 
                     if(params.DOCKER_IMAGE == 'utils'){
                         dockerImageName = "/utils:${params.TAG_VERSION}"                        
-                    }else{                        
+                    }else{
                         currentBuild.result = 'ABORTED'
                         error("Invalid DOCKER_IMAGE")
                     }
