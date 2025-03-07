@@ -16,7 +16,7 @@ pipeline {
     parameters {        
         choice(
             name: 'DOCKER_IMAGE', 
-            choices: ['roboutils'], 
+            choices: ['utils'], 
             description: 'Select Docker Image To be Built'
         )
         string(name: 'TAG_VERSION', defaultValue: 'v1.0', description: 'Docker Image Version Tag')         
