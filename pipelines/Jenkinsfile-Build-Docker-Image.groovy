@@ -16,7 +16,7 @@ pipeline {
     parameters {        
         choice(
             name: 'DOCKER_IMAGE', 
-            choices: ['utils'], 
+            choices: ['roboutils'], 
             description: 'Select Docker Image To be Built'
         )
         string(name: 'TAG_VERSION', defaultValue: 'v1.0', description: 'Docker Image Version Tag')         
@@ -67,7 +67,7 @@ pipeline {
         stage ('Build Docker Image') {
             steps {
                 script {
-                    print "Building Docker Image"                    
+                    print "Building Docker Image"
                     app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
                 }
             }
@@ -83,15 +83,17 @@ pipeline {
             }
         }        
         
-        // stage ('Push Built Image To Docker Hub') {
-        //     steps {
-        //         print "Pushing Docker Image To Docker Hub"
-        //         docker.withDockerRegistry("${REPOSITORY_SERVER}", 'dockerRegistryCredentialsId') {            
-        //             app.push("${env.BUILD_NUMBER}")            
-        //             app.push("${params.TAG_VERSION}")        
-        //         }
-        //     }
-        // }
+        stage ('Push Built Image To Docker Hub') {
+            steps {
+                script {
+                    print "Pushing Docker Image To Docker Hub"
+                    docker.withRegistry("${REPOSITORY_SERVER}", 'dockerHubCredentialsId') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("${params.TAG_VERSION}")
+                    }
+                }
+            }
+        }
     }
 
     post{
