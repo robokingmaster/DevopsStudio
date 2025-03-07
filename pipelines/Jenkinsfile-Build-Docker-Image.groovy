@@ -68,21 +68,11 @@ pipeline {
             steps {
                 script {
                     print "Building Docker Image"                    
-                    app = docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
+                    docker.build("${REPOSITORY_NAME}" + "${dockerImageName}", "--build-arg SSH_USER=sshuser --build-arg SSH_PWD=sshuserpwd -f ${dockerFilePath}/${dockerFileName} .")
                 }
             }
         }
 
-        stage ('Test Docker Image') {
-            steps {
-                script {
-                    app.inside {
-                        sh 'echo "Tests passed"'
-                    }
-                }
-            }
-        }        
-        
         // stage ('Push Built Image To Docker Hub') {
         //     steps {
         //         print "Pushing Docker Image To Docker Hub"
