@@ -1,4 +1,3 @@
-FROM jenkins/agent:latest-jdk17 as jenkinagent
 FROM python:3.12.8-bullseye
 
 LABEL maintainer="robokingmaster@gmail.com"
@@ -10,12 +9,7 @@ ARG AWS_AUTHENTICATOR_VERSION=0.6.29
 ARG SSH_USER=''
 ARG SSH_PWD=''
 
-ENV JAVA_HOME=/opt/java/openjdk \
-    JAVA_VERSION=$OPENJDK_VERSION \
-    JENKINS_HOME=/home/jenkins \
-    JENKINS_AGENT=/usr/share/jenkins \
-    CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION \
-    PATH=/google-cloud-sdk/bin:/usr/local/bin:/opt/java/openjdk/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH 
+ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH 
 
 # Install Basic Packages
 RUN apt-get -y update && \
@@ -64,12 +58,9 @@ RUN chmod 777 /entrypoint.sh \
     
 # Printing Installed Versions
 RUN python3 --version && \
-    pip --version && \
-    java --version && \
+    pip --version && \    
     env
 
-WORKDIR ${JENKINS_HOME}
-# USER jenkins
 USER root
 
 ENTRYPOINT ["/entrypoint.sh"]
