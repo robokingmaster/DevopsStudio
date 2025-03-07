@@ -31,4 +31,4 @@ create credentials
     Password: <github password>/<PAT (Personal Access Token)>
 - 3) Create Pipeline Job (Build-Docker-Image)
 create pipeline job name Build-Docker-Image. Under Pipeline-Definition choose Pipeline script from SCM. In Repository section add repository URL and choose the credentials. Add branch name under branch to build and save the job as shown in below image 
-![screenshot](resources/images/JenkinsBuildJob.png)
+![screenshot](../resources/images/JenkinsBuildJob.png)
