@@ -10,6 +10,8 @@ EKS Service Account Name: aws-load-balancer-controller
 Policy Name: AWSLoadBalancerControllerIAMPolicy
 
 ```
+aws eks update-kubeconfig --region us-east-2 --name <cluster-name> 
+
 eksctl create iamserviceaccount \
   --cluster=<cluster-name> \
   --namespace=kube-system \
