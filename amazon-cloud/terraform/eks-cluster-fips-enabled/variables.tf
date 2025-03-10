@@ -42,12 +42,6 @@ variable "tag_resource_owneremail" {
   type        = string
 }
 
-# Tag For ALM Toold Cost Governance
-variable "tag_donotshutdown" {
-  description = "Do not shutdown instance on weekend"
-  type        = string
-}
-
 # Deployment Information
 variable "deployment_id" {
   description = "Deployment Unique ID"

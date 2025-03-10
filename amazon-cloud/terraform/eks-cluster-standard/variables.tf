@@ -17,7 +17,6 @@ variable "aws_account_number" {
 }
 
 # Tags For Resources
-# Tags For Resources
 variable "tag_resource_owner" {
   description = "Tag Owner"
   type        = string
