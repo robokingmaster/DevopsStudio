@@ -1,0 +1,15 @@
+FROM jenkins/jenkins:latest
+LABEL maintainer="robokingmaster@gmail.com"
+USER root
+RUN apt-get update
+# install necessary packages to run docker
+RUN apt-get install docker.io docker-ce-cli -y
+RUN apt-get install sudo -y
+
+# add jenkins user to sudoers, no password
+RUN echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+USER jenkins
+
+# docker build --tag custom-jenkins:latest .
+# docker run -it custom-jenkins:latest /bin/bash

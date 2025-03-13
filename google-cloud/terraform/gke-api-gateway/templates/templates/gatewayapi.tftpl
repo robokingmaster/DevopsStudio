@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway-api
+  
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: ${cluster_name}-gateway
+  namespace: gateway-api
+  annotations:
+    networking.gke.io/certmap: ${tls_cert_map}
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  listeners:    
+    - name: https-listener
+      protocol: HTTPS
+      port: 443
+      hostname: "*.${domain_name}"
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+        namespaces:
+          from: All
+  addresses:
+    - type: NamedAddress
+      value: ${cluster_name}-static-ip-lb             

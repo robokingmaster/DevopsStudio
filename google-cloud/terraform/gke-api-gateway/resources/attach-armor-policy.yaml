@@ -1,0 +1,15 @@
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: redapp-armor-policy
+  namespace: red-app
+spec:
+  default:
+    securityPolicy: example-access-armor
+  targetRef:
+    group: ""
+    kind: Service
+    name: service-red
+
+# kubectl describe gcpbackendpolicy -n red-app
