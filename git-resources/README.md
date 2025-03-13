@@ -1,6 +1,6 @@
-### Git Tricks
+## Git Resources, Commands, Helps
 
-## Delete All Commit History
+### Delete All Commit History
 
 #### Step 1: Check out to a temporary branch
 Make sure your main branch is in the desired state first, as it will become the starting point of your new history. Then run
