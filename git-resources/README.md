@@ -24,7 +24,7 @@ git commit -m "Initial commit"
 ```
 The result is a single commit that contains all project files.
 
-![screenshot](./GitHistoryCleanup.png)
+![screenshot](../resources/images/GitHistoryCleanup.png)
 
 #### Step 4: Delete the main branch
 Now that we have committed the changes to the new branch, we can delete the local main branch, which contains our full commit history.
@@ -37,7 +37,7 @@ Next, we need to rename the temporary branch to master:
 ```
 git branch -m main
 ```
-![screenshot](./GitHistoryCleanup-1.png)
+![screenshot](../resources/images/GitHistoryCleanup-1.png)
 
 #### Step 6: Force update to our Git repository
 Finally, we need to force update our git repository using the following command:
@@ -46,7 +46,7 @@ git push --force origin main
 ```
 The --force option allows us to overwrite the history of the remote main branch with our new local history. This option should generally be used with caution, because you risk losing work you or others committed in the past. However, for us this is the intended result
 
-![screenshot](./GitHistoryCleanup-2.png)
+![screenshot](../resources/images/GitHistoryCleanup-2.png)
 
 ### Conclusion
 Deleting the commit history of a project before publishing it on GitHub is a serious decision that should not be taken lightly. After all, you will lose all changes ever made to the project, which makes it impossible to revert to an earlier version of your codebase. It is important to consider the reasons why you want to delete the commit history and the potential impact it may have on other contributors to the project. However, if you do decide to delete the commit history, the steps outlined above can help you do it effectively and efficiently.
