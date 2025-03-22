@@ -1,0 +1,21 @@
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: redapp-go-external
+  namespace: red-app
+spec:
+  parentRefs:
+    - kind: Gateway
+      name: external-http
+      namespace: gateway-api
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /red
+      backendRefs:
+        - name: service-red
+          port: 80
+
+# https://www.googlecloudcommunity.com/gc/Google-Kubernetes-Engine-GKE/Gateway-API-cross-namespace-routes-doesnt-work/m-p/737428

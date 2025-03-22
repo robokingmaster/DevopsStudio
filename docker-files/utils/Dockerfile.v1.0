@@ -1,0 +1,69 @@
+FROM python:3.12.8-bullseye
+
+LABEL maintainer="robokingmaster@gmail.com"
+
+ARG HELM_VERSION=v3.17.1
+ARG TERRAFORM_VERSION=1.10.5
+ARG CLOUD_SDK_VERSION=507.0.0
+ARG AWS_AUTHENTICATOR_VERSION=0.6.29
+ARG SSH_USER=''
+ARG SSH_PWD=''
+
+ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH 
+
+# Install Basic Packages
+RUN apt-get -y update && \
+	apt-get -y upgrade && \
+    apt-get -y install \
+        ca-certificates \
+        tzdata \
+        bash \
+        curl \ 
+        expect \
+        git \
+        gnupg \
+        jq \
+        make \
+        openssl \ 
+        openssh-server \
+        openssh-client \
+        openrc \
+        sudo \
+        libpq-dev \
+        gcc \
+        g++ \
+        musl-dev \
+        gnupg \
+        sshpass \
+        libaio1 \
+        libnsl2 \
+        vim
+
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# Creating Python Virtual Environment
+RUN python3 -m venv python3-env && \
+    . python3-env/bin/activate 
+
+# Script To Start SSH Serivice As Container Starts
+COPY entrypoint.v1.0.sh /entrypoint.sh
+
+# Creating Labops User Account
+RUN chmod 777 /entrypoint.sh \
+    && adduser --system --shell /bin/bash --home /home/${SSH_USER} ${SSH_USER} \
+    && echo "${SSH_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && echo "${SSH_USER}:${SSH_PWD}" | sudo chpasswd \
+    && echo ". /python3-env/bin/activate" >> /root/.profile
+    
+# Printing Installed Versions
+RUN python3 --version && \
+    pip --version && \    
+    env
+
+USER root
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# docker build --tag example-devops-agent:v6.0 --build-arg SSH_USER=<sshuser> --build-arg SSH_PWD=<sshpwd> .
+# docker run -it example-devops-agent:v6.0 /bin/bash
