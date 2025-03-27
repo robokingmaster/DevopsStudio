@@ -11,7 +11,7 @@ docker run --name jenkins -p 8080:8080 -p 50000:50000 \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v $(which docker):/usr/bin/docker \
 -v /tmp/jenkins:/var/jenkins_home \
-custom-jenkins:latest
+jenkins/jenkins:latest
 ```
 Access jenkins @ http://<hostip>:8080
 On first run you will see the password in logs use this password to login in to jenkins first time and setup your admin account through guided process.
