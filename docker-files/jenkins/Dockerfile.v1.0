@@ -1,5 +1,5 @@
 FROM jenkins/jenkins:latest
-LABEL maintainer="robokingmaster@gmail.com"
+LABEL maintainer="RoboKingMaster"
 USER root
 RUN apt-get update
 # install necessary packages to run docker

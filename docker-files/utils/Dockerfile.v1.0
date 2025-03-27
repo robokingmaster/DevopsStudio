@@ -1,6 +1,6 @@
 FROM python:3.12.8-bullseye
 
-LABEL maintainer="robokingmaster@gmail.com"
+LABEL maintainer="RoboKingMaster"
 
 ARG HELM_VERSION=v3.17.1
 ARG TERRAFORM_VERSION=1.10.5
