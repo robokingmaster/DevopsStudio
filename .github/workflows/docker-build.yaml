@@ -66,6 +66,22 @@ jobs:
         docker tag ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }} ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
         docker push ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
 
+    - name: Sending Email Notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: " GitHub Actions Build Failed"
+        to: ${{ secrets.EMAIL_RECIPIENT }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        body: |
+          The GitGub Actions workflow has failed.
+          Please check the logs at:
+          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+
     # - name: Notify on Failure
     #   if: failure()
     #   uses: dawidd6/action-send-mail@v3
