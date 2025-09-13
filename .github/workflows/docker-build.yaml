@@ -66,31 +66,42 @@ jobs:
         docker tag ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }} ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
         docker push ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
 
-    - name: Sending Email Notification
+    # ✅ Send email on success
+    - name: Send Success Email
+      if: success()
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: " GitHub Actions Build Failed"
+        subject: "✅ Build Succeeded: ${{ github.workflow }} #${{ github.run_number }}"
         to: ${{ secrets.EMAIL_RECIPIENT }}
         from: ${{ secrets.EMAIL_USERNAME }}
         body: |
-          The GitGub Actions workflow has failed.
-          Please check the logs at:
-          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          🎉 The build completed successfully!
+          - Workflow: ${{ github.workflow }}
+          - Run Number: ${{ github.run_number }}
+          - Commit: ${{ github.sha }}
+          - Actor: ${{ github.actor }}
+          - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-
-    # - name: Notify on Failure
-    #   if: failure()
-    #   uses: dawidd6/action-send-mail@v3
-    #   with:git add --al
-    #     server_address: smtp.gmail.com
-    #     server_port: 587
-    #     username: ${{ secrets.EMAIL_USERNAME }}
-    #     password: ${{ secrets.EMAIL_PASSWORD }}
-    #     subject: "Build failed in GitHub Actions: ${{ github.workflow }} - ${{ github.run_number }}"
-    #     to: ${{ env.EMAIL_RECIPIENT }}
-    #     from: ${{ env.EMAIL_RECIPIENT }}
-    #     body: "The build has failed. Please check the logs."
+    # ❌ Send email on failure
+    - name: Send Failure Email
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "❌ Build Failed: ${{ github.workflow }} #${{ github.run_number }}"
+        to: ${{ secrets.EMAIL_RECIPIENT }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        body: |
+          🚨 The build has failed.
+          - Workflow: ${{ github.workflow }}
+          - Run Number: ${{ github.run_number }}
+          - Commit: ${{ github.sha }}
+          - Actor: ${{ github.actor }}
+          - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
