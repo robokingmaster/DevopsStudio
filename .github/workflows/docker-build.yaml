@@ -1,0 +1,80 @@
+name: Docker Build and Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      DOCKER_IMAGE:
+        description: 'Select Docker Image To be Built'
+        required: true
+        default: 'utils'
+      TAG_VERSION:
+        description: 'Docker Image Version Tag'
+        required: true
+        default: 'v1.0'
+
+env:
+  REPOSITORY_NAME: robokingmaster
+  REPOSITORY_SERVER: https://registry.hub.docker.com
+  EMAIL_RECIPIENT: robokingmaster@gmail.com
+  DOCKER_HOST: unix:///var/run/docker.sock
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set Docker Variables
+      id: vars
+      run: |
+        echo "Processing Input Parameters"
+        if [[ "${{ github.event.inputs.DOCKER_IMAGE }}" != "utils" ]]; then
+          echo "Invalid DOCKER_IMAGE"
+          exit 1
+        fi
+
+        echo "dockerImageName=/utils:${{ github.event.inputs.TAG_VERSION }}" >> $GITHUB_OUTPUT
+        echo "dockerFilePath=docker-files/${{ github.event.inputs.DOCKER_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "dockerFileName=Dockerfile.${{ github.event.inputs.TAG_VERSION }}" >> $GITHUB_OUTPUT
+    - name: Copy EntryPoint Script
+      run: |
+        cp ${{ steps.vars.outputs.dockerFilePath }}/*.sh .
+        chmod 777 *.sh
+
+    - name: Build Docker Image
+      run: |
+        docker build \
+          --build-arg SSH_USER=sshuser \
+          --build-arg SSH_PWD=sshuserpwd \
+          -f ${{ steps.vars.outputs.dockerFilePath }}/${{ steps.vars.outputs.dockerFileName }} \
+          -t ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }} .
+
+    - name: Test Docker Image
+      run: |
+        docker run --rm ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }} echo "Tests passed"
+
+    # - name: Login to Docker Hub
+    #   uses: docker/login-action@v3
+    #   with:
+    #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
+    #     password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+    # - name: Push Docker Image
+    #   run: |
+    #     docker tag ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }} ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
+    #     docker push ${{ env.REPOSITORY_NAME }}${{ steps.vars.outputs.dockerImageName }}
+
+    # - name: Notify on Failure
+    #   if: failure()
+    #   uses: dawidd6/action-send-mail@v3
+    #   with:
+    #     server_address: smtp.gmail.com
+    #     server_port: 587
+    #     username: ${{ secrets.EMAIL_USERNAME }}
+    #     password: ${{ secrets.EMAIL_PASSWORD }}
+    #     subject: "Build failed in GitHub Actions: ${{ github.workflow }} - ${{ github.run_number }}"
+    #     to: ${{ env.EMAIL_RECIPIENT }}
+    #     from: ${{ env.EMAIL_RECIPIENT }}
+    #     body: "The build has failed. Please check the logs."
