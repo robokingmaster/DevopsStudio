@@ -6,10 +6,12 @@
   chmod +x install_docker.sh
   chmod +x install_kind.sh
   chmod +x install_kubectl.sh
+  chmod +x install_helm.sh
 
   ./install_docker.sh
   ./install_kind.sh
   ./install_kubectl.sh
+  ./install_helm.sh
   ```
 
 ## 1. Creating and Managing Kubernetes Cluster with Kind
