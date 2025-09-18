@@ -24,27 +24,37 @@ jobs:
       - name: Get changed folders
         id: set
         run: |
+          echo "🔍 Detecting changes under nodejs/..."
           CHANGED=$(git diff --name-only origin/main | grep '^nodejs/' | cut -d'/' -f2 | sort -u | uniq)
+          echo "Raw changed items: $CHANGED"
+
           FOLDERS=""
           for item in $CHANGED; do
             if [ -d "nodejs/$item" ]; then
+              echo "✅ Found folder: nodejs/$item"
               FOLDERS="$FOLDERS $item"
+            else
+              echo "❌ Skipping non-folder: nodejs/$item"
             fi
           done
+
+          echo "Filtered folders: $FOLDERS"
 
           if [ -z "$FOLDERS" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
             JSON=$(echo "$FOLDERS" | jq -R -s -c 'split(" ") | map(select(length > 0))')
+            echo "Final JSON: $JSON"
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
 
-      - name: Debug changed folders
+      - name: Debug changed_projects output
         run: |
-          echo "Detected changed folders: ${{ steps.set.outputs.changed }}"
+          echo "🔧 Output to matrix: ${{ steps.set.outputs.changed }}"
 
   build-and-push:
-    needs: detect-changes    
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed_projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -52,11 +62,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Fetch base branch
-        run: git fetch origin main
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -80,7 +85,6 @@ jobs:
           docker push $VERSION_TAG
           docker push $LATEST_TAG
 
-      # ✅ Send email on success
       - name: Send Success Email
         if: success()
         uses: dawidd6/action-send-mail@v3
@@ -100,7 +104,6 @@ jobs:
             - Actor: ${{ github.actor }}
             - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      # ❌ Send email on failure
       - name: Send Failure Email
         if: failure()
         uses: dawidd6/action-send-mail@v3
