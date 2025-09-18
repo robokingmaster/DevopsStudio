@@ -13,7 +13,7 @@ const addUser = ({id, username, room}) => {
     username = camelize(username.trim().toLowerCase())
     room = camelize(room.trim().toLowerCase())
 
-    // validate the data
+    // validate the user data
     if (!username || !room) {
         return {
             error: 'User name and room are required!'
