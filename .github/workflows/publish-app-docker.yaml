@@ -1,4 +1,4 @@
-name: Deploy NodeJS Projects
+name: Publish - Project To GitHub
 on:
   push:
     branches:
