@@ -7,7 +7,7 @@ const camelize = (str) => {
        .join("")
  }
 
-// Add user
+// Add user into chat
 const addUser = ({id, username, room}) => {
     // Clean the data
     username = camelize(username.trim().toLowerCase())
