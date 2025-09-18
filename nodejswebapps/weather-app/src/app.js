@@ -24,14 +24,14 @@ app.use(express.static(publicDirectoryPath))
 app.get('', (req, res) => {
     res.render('index', {
         title: 'Weather App',
-        name: 'Ritesh Kumar'
+        name: 'RoboKing Master'
     })
 })
 
 app.get('/about', (req, res) => {
     res.render('about', {
         title: 'About Me',
-        name: 'Ritesh Kumar'
+        name: 'RoboKing Master'
     })
 })
 
@@ -39,7 +39,7 @@ app.get('/help', (req, res) => {
     res.render('help', {
         title: 'Help',
         helpText: 'This is help page',
-        name: 'Ritesh Kumar'
+        name: 'RoboKing Master'
     })
 })
 
@@ -54,7 +54,8 @@ app.get('/weather', (req, res) => {
     geocode(req.query.address, (error, data) => {
         if (error){
             return res.send( {error })
-        }    
+        } 
+        console.log('✅ Getting Data For Retrived Coordinates:', data); 
         forecast(data.latitude, data.longitude, (error, forcastdata) => {
             if (error){
                 return res.send({error})
