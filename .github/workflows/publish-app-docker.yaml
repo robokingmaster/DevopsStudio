@@ -66,14 +66,8 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: List Files in Docker Context
-        run: |
-          echo "📁 Listing files in nodejs/${{ matrix.project }}:"
-          ls -ltRa nodejs/${{ matrix.project }}
-          pwd
-
       - name: Auto-detect version from package.json
-        id: get_version
+        id: get_project
         run: |
           PROJECT_NAME="$(echo "${{ matrix.project }}" | tr -d '\n' | tr -d '\r')"
           echo "📦 Identified Project Name As: $PROJECT_NAME"
@@ -91,11 +85,11 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_BASE="robokingmaster/${{ steps.get_projectname.outputs.projectname }}"
-          VERSION_TAG="${IMAGE_BASE}:${{ steps.get_version.outputs.version }}"
+          IMAGE_BASE="robokingmaster/${{ steps.get_project.outputs.projectname }}"
+          VERSION_TAG="${IMAGE_BASE}:${{ steps.get_project.outputs.version }}"
           LATEST_TAG="${IMAGE_BASE}:latest"
 
-          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.get_projectname.outputs.projectname }}
+          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.get_project.outputs.projectname }}
           docker push $VERSION_TAG
           docker push $LATEST_TAG
 
@@ -112,7 +106,7 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
           body: |
             🎉 The build completed successfully!
-            - Project Name: ${{ steps.get_projectname.outputs.projectname }}
+            - Project Name: ${{ steps.get_project.outputs.projectname }}
             - Workflow: ${{ github.workflow }}
             - Run Number: ${{ github.run_number }}
             - Commit: ${{ github.sha }}
@@ -132,7 +126,7 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
           body: |
             🚨 The build has failed.
-            - Project Name: ${{ steps.get_projectname.outputs.projectname }}
+            - Project Name: ${{ steps.get_project.outputs.projectname }}
             - Workflow: ${{ github.workflow }}
             - Run Number: ${{ github.run_number }}
             - Commit: ${{ github.sha }}
