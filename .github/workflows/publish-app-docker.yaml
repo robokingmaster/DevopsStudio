@@ -87,15 +87,15 @@ jobs:
 
           VERSION=$(jq -r .version "$PACKAGE_JSON")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "projectname=$PROJECT_NAME" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         run: |
-          IMAGE_BASE="robokingmaster/${{ steps.set_project.outputs.project_name }}"
+          IMAGE_BASE="robokingmaster/${{ steps.get_projectname.outputs.projectname }}"
           VERSION_TAG="${IMAGE_BASE}:${{ steps.get_version.outputs.version }}"
           LATEST_TAG="${IMAGE_BASE}:latest"
 
-          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.set_project.outputs.project_name }}
+          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.get_projectname.outputs.projectname }}
           docker push $VERSION_TAG
           docker push $LATEST_TAG
 
@@ -112,6 +112,7 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
           body: |
             🎉 The build completed successfully!
+            - Project Name: ${{ steps.get_projectname.outputs.projectname }}
             - Workflow: ${{ github.workflow }}
             - Run Number: ${{ github.run_number }}
             - Commit: ${{ github.sha }}
@@ -131,6 +132,7 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
           body: |
             🚨 The build has failed.
+            - Project Name: ${{ steps.get_projectname.outputs.projectname }}
             - Workflow: ${{ github.workflow }}
             - Run Number: ${{ github.run_number }}
             - Commit: ${{ github.sha }}
