@@ -69,7 +69,7 @@ jobs:
       - name: Auto-detect version from package.json
         id: get_version
         run: |
-          PACKAGE_JSON=$(find nodejs/${{ matrix.project }} -name package.json | head -n 1)
+          PACKAGE_JSON=$(ind nodejs/${{ matrix.project }} -type f -name package.json | head -n 1)
           echo "📦 Found package.json at: $PACKAGE_JSON"
 
           if [ -z "$PACKAGE_JSON" ]; then
