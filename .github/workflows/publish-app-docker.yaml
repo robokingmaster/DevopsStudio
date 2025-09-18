@@ -75,7 +75,7 @@ jobs:
       - name: Auto-detect version from package.json
         id: get_version
         run: |
-          PROJECT_NAME="${{ matrix.project }}"
+          PROJECT_NAME="$(echo "${{ matrix.project }}" | tr -d '\n' | tr -d '\r')"
           echo "📦 Identified Project Name As: $PROJECT_NAME"
           PACKAGE_JSON="nodejs/$PROJECT_NAME/package.json"
           echo "📦 Looking for package.json at: $PACKAGE_JSON"
