@@ -66,19 +66,20 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: List File In Docker Context
+      - name: List Files in Docker Context
         run: |
-          ls -ltRa .
+          echo "📁 Listing files in nodejs/${{ matrix.project }}:"
+          ls -ltRa nodejs/${{ matrix.project }}
           pwd
 
       - name: Auto-detect version from package.json
         id: get_version
         run: |
-          PACKAGE_JSON=nodejs/${{ matrix.project }}/package.json
-          echo "📦 Found package.json at: $PACKAGE_JSON"
+          PACKAGE_JSON="nodejs/${{ matrix.project }}/package.json"
+          echo "📦 Looking for package.json at: $PACKAGE_JSON"
 
-          if [ -z "$PACKAGE_JSON" ]; then
-            echo "❌ No package.json found At $PACKAGE_JSON"
+          if [ ! -f "$PACKAGE_JSON" ]; then
+            echo "❌ No package.json found at $PACKAGE_JSON"
             exit 1
           fi
 
