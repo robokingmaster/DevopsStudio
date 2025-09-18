@@ -66,6 +66,11 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
+      - name: List File In Docker Context
+        run: |
+          ls -ltRa .
+          pwd
+
       - name: Auto-detect version from package.json
         id: get_version
         run: |
