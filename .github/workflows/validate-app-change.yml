@@ -26,9 +26,11 @@ jobs:
           if [ -z "$CHANGED" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
-            JSON=$(echo "$CHANGED" | jq -R . | jq -s .)
+            # Convert to JSON array safely
+            JSON=$(echo "$CHANGED" | jq -R . | jq -s . | tr -d '\n')
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
+  
   build-and-test:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_projects != '[]'
