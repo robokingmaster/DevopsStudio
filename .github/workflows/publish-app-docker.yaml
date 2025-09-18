@@ -1,4 +1,5 @@
 name: Publish - Project To GitHub
+
 on:
   push:
     branches:
@@ -10,12 +11,12 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_projects: ${{ steps.filter.outputs.changed }}
+      changed_projects: ${{ steps.set.outputs.changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Important to fetch full history
+          fetch-depth: 0
 
       - name: Fetch base branch
         run: git fetch origin main
@@ -27,12 +28,13 @@ jobs:
           if [ -z "$CHANGED" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
-            JSON="[\"$(echo $CHANGED | tr ' ' '\" , \"')\"]"
+            JSON=$(echo "$CHANGED" | jq -R -s -c 'split("\n") | map(select(length > 0))')
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
 
   build-and-push:
     needs: detect-changes
+    if: needs.detect-changes.outputs.changed_projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,6 +42,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -54,7 +57,10 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME="robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }}"
-          docker build -t $IMAGE_NAME ./nodejs/${{ matrix.project }}
-          docker push $IMAGE_NAME
+          IMAGE_BASE="robokingmaster/devopsstudio-${{ matrix.project }}"
+          VERSION_TAG="${IMAGE_BASE}:${{ steps.get_version.outputs.version }}"
+          LATEST_TAG="${IMAGE_BASE}:latest"
 
+          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ matrix.project }}
+          docker push $VERSION_TAG
+          docker push $LATEST_TAG
