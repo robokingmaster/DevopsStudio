@@ -1,0 +1,47 @@
+name: Deploy NodeJS Projects
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'nodejs/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_projects: ${{ steps.filter.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get changed folders
+        id: filter
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^nodejs/' | cut -d'/' -f2 | sort -u)
+          echo "changed=$(echo $CHANGED | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJson(needs.detect-changes.outputs.changed_projects) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version from package.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version nodejs/${{ matrix.project }}/package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Build and push Docker image
+        run: |
+          docker build -t robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }} ./nodejs/${{ matrix.project }}
+          docker push robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }}
