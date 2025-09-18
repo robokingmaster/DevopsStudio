@@ -14,10 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Important to fetch full history
+          fetch-depth: 0
 
       - name: Fetch base branch
-        run: git fetch origin main
+        run: git fetch origin ${{ github.base_ref }}
 
       - name: Get changed folders
         id: set
@@ -29,7 +29,6 @@ jobs:
             JSON=$(echo "$CHANGED" | jq -R . | jq -s .)
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
-
   build-and-test:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_projects != '[]'
