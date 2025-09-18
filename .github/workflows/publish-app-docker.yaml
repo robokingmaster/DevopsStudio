@@ -1,4 +1,4 @@
-name: Deploy NodeJS Projects
+name: Publish - Project To GitHub
 on:
   push:
     branches:
@@ -14,12 +14,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important to fetch full history
+
+      - name: Fetch base branch
+        run: git fetch origin main
 
       - name: Get changed folders
-        id: filter
+        id: set
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^nodejs/' | cut -d'/' -f2 | sort -u)
-          echo "changed=$(echo $CHANGED | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> $GITHUB_OUTPUT
+          CHANGED=$(git diff --name-only origin/main | grep '^nodejs/' | cut -d'/' -f2 | sort -u | uniq)
+          if [ -z "$CHANGED" ]; then
+            echo "changed=[]" >> $GITHUB_OUTPUT
+          else
+            JSON="[\"$(echo $CHANGED | tr ' ' '\" , \"')\"]"
+            echo "changed=$JSON" >> $GITHUB_OUTPUT
+          fi
 
   build-and-push:
     needs: detect-changes
@@ -41,7 +51,10 @@ jobs:
         run: |
           VERSION=$(jq -r .version nodejs/${{ matrix.project }}/package.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         run: |
-          docker build -t robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }} ./nodejs/${{ matrix.project }}
-          docker push robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }}
+          IMAGE_NAME="robokingmaster/devopsstudio-${{ matrix.project }}:${{ steps.get_version.outputs.version }}"
+          docker build -t $IMAGE_NAME ./nodejs/${{ matrix.project }}
+          docker push $IMAGE_NAME
+
