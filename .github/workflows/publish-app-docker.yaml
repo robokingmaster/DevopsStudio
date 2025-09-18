@@ -87,14 +87,15 @@ jobs:
 
           VERSION=$(jq -r .version "$PACKAGE_JSON")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         run: |
-          IMAGE_BASE="robokingmaster/devopsstudio-${{ matrix.project }}"
+          IMAGE_BASE="robokingmaster/${{ steps.set_project.outputs.project_name }}"
           VERSION_TAG="${IMAGE_BASE}:${{ steps.get_version.outputs.version }}"
           LATEST_TAG="${IMAGE_BASE}:latest"
 
-          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ matrix.project }}
+          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.set_project.outputs.project_name }}
           docker push $VERSION_TAG
           docker push $LATEST_TAG
 
