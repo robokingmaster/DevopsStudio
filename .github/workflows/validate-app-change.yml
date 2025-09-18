@@ -1,0 +1,50 @@
+name: PR Check - NodeJS Projects
+
+on:
+  pull_request:
+    paths:
+      - 'nodejs/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_projects: ${{ steps.set.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important to fetch full history
+
+      - name: Fetch base branch
+        run: git fetch origin main
+
+      - name: Get changed folders
+        id: set
+        run: |
+          CHANGED=$(git diff --name-only origin/main | grep '^nodejs/' | cut -d'/' -f2 | sort -u | uniq)
+          if [ -z "$CHANGED" ]; then
+            echo "changed=[]" >> $GITHUB_OUTPUT
+          else
+            JSON="[\"$(echo $CHANGED | tr ' ' '\" , \"')\"]"
+            echo "changed=$JSON" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed_projects != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJson(needs.detect-changes.outputs.changed_projects) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image for ${{ matrix.project }}
+        run: |
+          docker build -t devopsstudio-temp:${{ matrix.project }} ./nodejs/${{ matrix.project }}
+
+      - name: Run tests for ${{ matrix.project }}
+        run: |
+          docker run --rm devopsstudio-temp:${{ matrix.project }} npm test
