@@ -71,5 +71,7 @@ io.on('connection', (socket) => {
 
 //Runnign server
 server.listen(port, () => {
+    console.log('-------------------------------------------')
     console.log('NodeJS Server Is Up And Running On Port => ' + port)
+    console.log('-------------------------------------------')
 })
