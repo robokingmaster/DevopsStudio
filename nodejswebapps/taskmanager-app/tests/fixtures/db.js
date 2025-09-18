@@ -8,7 +8,7 @@ const userOne = {
     _id: userOneId,
     name: 'Gaurav Shukla',
     email: 'agauravnext@gmail.com',
-    password: 'MyPass777!',
+    password: 'xxxxxxx!',
     tokens: [{ 
         token: jwt.sign({ _id: userOneId }, process.env.JWT_SECRET)
     }]
@@ -19,7 +19,7 @@ const userTwo = {
     _id: userTwoId,
     name: 'Giridhar',
     email: 'girinext@gmail.com',
-    password: 'MyPass777!',
+    password: 'xxxxxxx!',
     tokens: [{ 
         token: jwt.sign({ _id: userTwoId }, process.env.JWT_SECRET)
     }]
