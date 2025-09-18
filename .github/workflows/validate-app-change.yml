@@ -18,11 +18,11 @@ jobs:
         id: filter
         run: |
           CHANGED=$(git diff --name-only origin/main | grep '^nodejs/' | cut -d'/' -f2 | sort -u)
-          echo "Changed folders: $CHANGED"
-          echo "changed=$(echo $CHANGED | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> $GITHUB_OUTPUT
+          echo "changed=$(echo $CHANGED | jq -R -s -c 'split(\"\\n\") | map(select(length > 0))')" >> $GITHUB_OUTPUT
 
   build-and-test:
     needs: detect-changes
+    if: needs.detect-changes.outputs.changed_projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
