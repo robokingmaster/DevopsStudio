@@ -71,6 +71,12 @@ jobs:
         run: |
           PACKAGE_JSON=$(find nodejs/${{ matrix.project }} -name package.json | head -n 1)
           echo "📦 Found package.json at: $PACKAGE_JSON"
+
+          if [ -z "$PACKAGE_JSON" ]; then
+            echo "❌ No package.json found in nodejs/${{ matrix.project }}"
+            exit 1
+          fi
+
           VERSION=$(jq -r .version "$PACKAGE_JSON")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
