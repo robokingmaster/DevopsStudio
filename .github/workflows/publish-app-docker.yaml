@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'nodejs/**'
+      - 'nodejs-web/**'
 
 jobs:
   detect-changes:
@@ -21,17 +21,17 @@ jobs:
       - name: Get changed folders
         id: set
         run: |
-          echo "🔍 Detecting changes under nodejs/..."
-          CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^nodejs/' | cut -d'/' -f2 | sort -u | uniq)
+          echo "🔍 Detecting changes under nodejs-web/..."
+          CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^nodejs-web/' | cut -d'/' -f2 | sort -u | uniq)
           echo "Raw changed items: $CHANGED"
 
           FOLDERS=""
           for item in $CHANGED; do
-            if [ -d "nodejs/$item" ]; then
-              echo "✅ Found folder: nodejs/$item"
+            if [ -d "nodejs-web/$item" ]; then
+              echo "✅ Found folder: nodejs-web/$item"
               FOLDERS="$FOLDERS $item"
             else
-              echo "❌ Skipping non-folder: nodejs/$item"
+              echo "❌ Skipping non-folder: nodejs-web/$item"
             fi
           done
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           PROJECT_NAME="$(echo "${{ matrix.project }}" | tr -d '\n' | tr -d '\r')"
           echo "📦 Identified Project Name As: $PROJECT_NAME"
-          PACKAGE_JSON="nodejs/$PROJECT_NAME/package.json"
+          PACKAGE_JSON="nodejs-web/$PROJECT_NAME/package.json"
           echo "📦 Looking for package.json at: $PACKAGE_JSON"
 
           if [ ! -f "$PACKAGE_JSON" ]; then
@@ -89,7 +89,7 @@ jobs:
           VERSION_TAG="${IMAGE_BASE}:${{ steps.get_project.outputs.version }}"
           LATEST_TAG="${IMAGE_BASE}:latest"
 
-          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs/${{ steps.get_project.outputs.projectname }}
+          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejs-web/${{ steps.get_project.outputs.projectname }}
           docker push $VERSION_TAG
           docker push $LATEST_TAG
 
