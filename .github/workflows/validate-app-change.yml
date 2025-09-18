@@ -13,6 +13,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important to fetch full history
+
+      - name: Fetch base branch
+        run: git fetch origin main
 
       - name: Get changed folders
         id: set
