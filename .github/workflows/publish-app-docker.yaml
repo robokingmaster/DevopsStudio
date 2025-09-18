@@ -41,7 +41,7 @@ jobs:
 
   build-and-push:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed_projects != '[]'
+    # if: needs.detect-changes.outputs.changed_projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
