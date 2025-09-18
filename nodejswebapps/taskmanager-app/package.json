@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --watch --runInBand"
+    "test": "jest --watchAll --runInBand"
   },
   "jest": {
     "testEnvironment": "node"
