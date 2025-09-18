@@ -39,9 +39,12 @@ jobs:
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
 
+      - name: Debug changed folders
+        run: |
+          echo "Detected changed folders: ${{ steps.set.outputs.changed }}"
+
   build-and-push:
-    needs: detect-changes
-    # if: needs.detect-changes.outputs.changed_projects != '[]'
+    needs: detect-changes    
     runs-on: ubuntu-latest
     strategy:
       matrix:
