@@ -44,4 +44,3 @@ Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USE
 ## Running on kubernetes
 To run this project on Kubernetes, make sure postgres database provisioned. 
 Than run database sql file present in resources/database-schema/database-schema.sql folder of the application.
-
