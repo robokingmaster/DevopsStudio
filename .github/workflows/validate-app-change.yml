@@ -3,7 +3,7 @@ name: Validate Push
 on:
   push:
     paths:
-      - 'projects-demo/nodejs-web/**'
+      - 'projects-demo/**'
 
 jobs:
   detect-changes:
@@ -19,18 +19,21 @@ jobs:
       - name: Fetch base branch
         run: git fetch origin ${{ github.base_ref }}
 
-      - name: Get changed folders
+      - name: Get changed project folders
         id: set
         run: |
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }} | grep '^nodejswebapps/' | cut -d'/' -f2 | sort -u)
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }} |
+            grep '^projects-demo/' |
+            awk -F'/' '{print $1"/"$2"/"$3}' |
+            sort -u)
+          
           if [ -z "$CHANGED" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
-            # Convert to JSON array safely
             JSON=$(echo "$CHANGED" | jq -R . | jq -s . | tr -d '\n')
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
-  
+
   build-and-test:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_projects != '[]'
@@ -44,7 +47,7 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t devopsstudio-temp:${{ matrix.project }} ./nodejswebapps/${{ matrix.project }}
+          docker build -t devopsstudio-temp:${{ matrix.project }} ./${{ matrix.project }}
 
       - name: Run tests for ${{ matrix.project }}
         run: |
