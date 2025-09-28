@@ -42,4 +42,5 @@ All the profile picture will be stored in uploads directory
 Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD.
 
 ## Running on kubernetes
-To run this project on Kubernetes, make sure postgres database provisioned. Than run database sql file present in resources/database-schema/database-schema.sql folder of the application.
+To run this project on Kubernetes, make sure postgres database provisioned. 
+Than run database sql file present in resources/database-schema/database-schema.sql folder of the application.
