@@ -1,4 +1,4 @@
-## Backend Configuration
+## Manage User Backend
 
 ### Create .env file for environemnt veriables
 Create .env file with below content. Replace X with actual values
