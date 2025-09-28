@@ -5,6 +5,10 @@ on:
     paths:
       - 'nodejswebapps/**'
 
+  push:
+    paths:
+      - 'nodejswebapps/**'
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
