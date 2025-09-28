@@ -39,4 +39,4 @@ npm start
 All the profile picture will be stored in uploads directory
 
 ### Default Admin Credentials
-Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD
+Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD.
