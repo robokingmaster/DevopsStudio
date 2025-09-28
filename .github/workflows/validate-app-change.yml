@@ -145,7 +145,7 @@ jobs:
         run: |
           cd ${{ steps.locate.outputs.path }}
           if [ -f "package.json" ]; then
-            docker run --rm --name app-testsuite --network docker-network \
+            docker run --rm --name ${{ matrix.project }} --network docker-network \
               -e DATABASE_HOST=test-pgdb \
               -e DATABASE_PORT=5432 \
               -e POSTGRES_USER=$POSTGRESS_DBUSER \
@@ -161,16 +161,16 @@ jobs:
               ${{ matrix.project }}:temp 
 
             echo "Waiting for container to start..."
-            sleep 30
+            sleep 15
 
             echo "Checking if app is running..."
 
             if ! curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:5000/login | grep -q "^200$"; then
               echo "App failed to start application"
-              docker logs app-testsuite
+              docker logs ${{ matrix.project }}
               exit 1
             else
-              echo "✅ Application is up and responding to login page"
+              echo "✅ Application ${{ matrix.project }} is up and responding to login page"
             fi              
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
