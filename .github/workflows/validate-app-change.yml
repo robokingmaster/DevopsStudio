@@ -106,7 +106,7 @@ jobs:
           POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
           POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
           POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
-          JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+          APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
           APP_DEFAULT_USER: ${{ secrets.APP_DEFAULT_USER }}
           APP_DEFAULT_PWD: ${{ secrets.APP_DEFAULT_PWD }}    
         run: |
@@ -123,7 +123,7 @@ jobs:
               -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
               -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
               -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
-              -e APP_JWT_SECRET=$JWT_SECRET \
+              -e APP_JWT_SECRET=$APP_JWT_SECRET \
               -p 5000:5000 \
               ${{ matrix.project }}:temp \
               npm test
