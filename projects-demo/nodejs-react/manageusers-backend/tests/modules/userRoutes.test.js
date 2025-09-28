@@ -13,7 +13,7 @@ describe('🧑‍💼 User Routes', function () {
 
   before(() => {
     logger.info('🧑‍💼 User Test Started ...');
-    logger.info(`📝 Using Test user context set for loginid => ${testContext.adminUser.loginid} and password=> ${testContext.adminUser.password }`);
+    logger.info(`📝 Using Test user context set for loginid => ${testContext.adminUser.loginid} `);
   });
 
   after(() => {

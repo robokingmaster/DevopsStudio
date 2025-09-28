@@ -12,7 +12,7 @@ describe('🔐 Authentication Controller - Login', function () {
 
   before(async function () {
     logger.info('🔐 Auth Test Started ...'); 
-    logger.info(`📝 Using Test user context set for loginid => ${ testContext.adminUser.loginid } and password=> ${testContext.adminUser.password }`);
+    logger.info(`📝 Using Test user context set for loginid => ${ testContext.adminUser.loginid } and password=> ${testContext.adminPass }`);
   });
 
   after(async () => {
@@ -20,10 +20,10 @@ describe('🔐 Authentication Controller - Login', function () {
     // Login and capture tokens
     const adminLogin = await request(app)
       .post('/auth/login')
-      .send({ loginid: testContext.adminUser.loginid, password: testContext.adminUser.password });
+      .send({ loginid: testContext.adminUser.loginid, password: testContext.adminPass });
 
     logger.info('🔓 Setting authorization context and token for subsequent api calls');
-    testContext.adminToken = adminLogin.body.token;
+    testContext.adminToken = adminLogin.body.token;    
     testContext.adminUser = adminLogin.body.user;
     logger.debug('🧑‍💼 Admin Token:', testContext.adminToken);    
     logger.info('🔓 Authorization context and token set');

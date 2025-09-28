@@ -35,8 +35,8 @@ before(async function () {
       logger.info('✅ Default user created');
     } else {
       logger.info(`✅ Default user already exists.`);
-    }
-    adminUser.password = process.env.APP_DEFAULT_PWD;
+    }    
+    testContext.adminPass = process.env.APP_DEFAULT_PWD;
     testContext.adminUser = adminUser;
     logger.debug(`💾 Set testContext.adminUser`);
     logger.info(`💾 Test user context set for loginid => ${testContext.adminUser.loginid}`);
