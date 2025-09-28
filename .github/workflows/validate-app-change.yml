@@ -46,11 +46,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Locate project folder
+      - name: Locate project information
         id: locate
         run: |
           PROJECT_PATH=$(find projects-demo -type d -name "${{ matrix.project }}" | head -n 1)
           echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
+
+          if [ -f "package.json" ]; then
+            echo "project_type=nodejs" >> $GITHUB_OUTPUT
+            echo "launch_database=true" >> $GITHUB_OUTPUT
+          elif [ -f "requirements.txt" ]; then
+            echo "project_type=python" >> $GITHUB_OUTPUT
+          else
+            echo "No recognizable test setup found."            
+          fi
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
@@ -58,9 +67,11 @@ jobs:
 
       ## Perfoming Test Before Pushing Image
       - name: Create Docker Network
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
         run: docker network create docker-network
 
       - name: Start PostgreSQL Container
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
         env:
           POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
           POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
@@ -74,6 +85,7 @@ jobs:
             postgres:16
 
       - name: Wait for Postgres
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}      
         env:
           POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
           POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
@@ -89,6 +101,7 @@ jobs:
           done
 
       - name: Load test database with inventory schema
+        if: ${{ steps.locate.outputs.launch_database == 'true' }} 
         env:
           POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
           POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
@@ -101,7 +114,8 @@ jobs:
             docker exec test-pgdb psql -U $POSTGRESS_DBUSER -d $POSTGRESS_DBNAME -f /tmp/schema.sql
           fi       
 
-      - name: Run tests suites for ${{ matrix.project }}
+      - name: Run NodeJs tests suites for ${{ matrix.project }}
+        if: ${{ steps.locate.outputs.launch_database == 'true' && steps.locate.outputs.project_type == 'nodejs' }} 
         env:
           POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
           POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
@@ -111,25 +125,19 @@ jobs:
           APP_DEFAULT_PWD: ${{ secrets.APP_DEFAULT_PWD }}    
         run: |
           cd ${{ steps.locate.outputs.path }}
-          if [ -f "package.json" ]; then
-            docker run --rm --name app-testsuite --network docker-network \
-              -e DATABASE_HOST=test-pgdb \
-              -e DATABASE_PORT=5432 \
-              -e POSTGRES_USER=$POSTGRESS_DBUSER \
-              -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
-              -e POSTGRES_DBNAME=$POSTGRESS_DBNAME \
-              -e APP_ENV=$APP_ENV \
-              -e APP_PORT=5000 \
-              -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
-              -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
-              -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
-              -e APP_JWT_SECRET=$APP_JWT_SECRET \
-              -p 5000:5000 \
-              ${{ matrix.project }}:temp \
-              npm test           
-          elif [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-            pytest
-          else
-            echo "No recognizable test setup found."
-          fi
+          docker run --rm --name app-testsuite --network docker-network \
+            -e DATABASE_HOST=test-pgdb \
+            -e DATABASE_PORT=5432 \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DBNAME=$POSTGRESS_DBNAME \
+            -e APP_ENV=$APP_ENV \
+            -e APP_PORT=5000 \
+            -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
+            -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
+            -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
+            -e APP_JWT_SECRET=$APP_JWT_SECRET \
+            -p 5000:5000 \
+            ${{ matrix.project }}:temp \
+            npm test           
+
