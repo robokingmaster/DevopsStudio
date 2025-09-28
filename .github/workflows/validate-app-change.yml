@@ -74,9 +74,13 @@ jobs:
             postgres:16
 
       - name: Wait for Postgres
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}      
         run: |
           for i in {1..30}; do
-            if docker exec test-pgdb pg_isready -U testdbuser; then
+            if docker exec test-pgdb pg_isready -U $POSTGRESS_DBUSER; then
               echo "Postgres is ready"
               break
             fi
