@@ -52,14 +52,14 @@ jobs:
           PROJECT_PATH=$(find projects-demo -type d -name "${{ matrix.project }}" | head -n 1)
           echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
 
-          if [ -f "$PROJECT_PATH"/package.json" ]; then
+          if [ -f "$PROJECT_PATH/package.json" ]; then
             echo "project_type=nodejs" >> $GITHUB_OUTPUT
             echo "launch_database=true" >> $GITHUB_OUTPUT
-          elif [ -f "$PROJECT_PATH"/requirements.txt" ]; then
+          elif [ -f "$PROJECT_PATH/requirements.txt" ]; then
             echo "project_type=python" >> $GITHUB_OUTPUT
             echo "launch_database=false" >> $GITHUB_OUTPUT
           else
-            echo "No recognizable test setup found."            
+            echo "No recognizable test setup found."       
           fi
 
       - name: Print project veriables
