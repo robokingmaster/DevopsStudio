@@ -1,6 +1,6 @@
 ## Backend Configuration
 
-### Create .env file
+### Create .env file 
 Create .env file with below content. Replace X with actual values
 ```
 DATABASE_HOST=localhost               ## When App Running on host 
