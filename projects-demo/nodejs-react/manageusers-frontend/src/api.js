@@ -2,7 +2,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/',
+  // baseURL: 'http://localhost:5000/',
+  baseURL: process.env.REACT_APP_BACKEND_API_BASE
 });
 
 API.interceptors.request.use((req) => {

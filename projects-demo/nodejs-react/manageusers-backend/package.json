@@ -1,5 +1,5 @@
 {
-  "name": "user-managment",
+  "name": "user-managment-backend",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
