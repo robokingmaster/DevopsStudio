@@ -108,23 +108,21 @@ jobs:
         run: |
           cd ${{ steps.locate.outputs.path }}
           if [ -f "package.json" ]; then
-            if grep -q '"react"' package.json; then
-              docker run --rm --name app-testsuite --network docker-network \
-                -e INVENTORYDB_HOST=test-pgdb \
-                -e INVENTORYDB_PORT=5432 \
-                -e INVENTORYDB_USER=$INVENTORYDB_USER \
-                -e INVENTORYDB_PASSWORD=$DB_PASSWORD \
-                -e INVENTORYDB_NAME=$INVENTORYDB_NAME \
-                -e APP_ENV=$APP_ENV \
-                -e APP_PORT=5000 \
-                -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
-                -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
-                -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
-                -e APP_JWT_SECRET=$JWT_SECRET \
-                -p 5000:5000 \
-                ${{ matrix.project }}:temp \
-                npm test
-            fi
+            docker run --rm --name app-testsuite --network docker-network \
+              -e INVENTORYDB_HOST=test-pgdb \
+              -e INVENTORYDB_PORT=5432 \
+              -e INVENTORYDB_USER=$INVENTORYDB_USER \
+              -e INVENTORYDB_PASSWORD=$DB_PASSWORD \
+              -e INVENTORYDB_NAME=$INVENTORYDB_NAME \
+              -e APP_ENV=$APP_ENV \
+              -e APP_PORT=5000 \
+              -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
+              -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
+              -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
+              -e APP_JWT_SECRET=$JWT_SECRET \
+              -p 5000:5000 \
+              ${{ matrix.project }}:temp \
+              npm test
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
             pytest
