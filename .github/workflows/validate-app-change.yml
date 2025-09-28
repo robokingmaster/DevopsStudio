@@ -52,6 +52,43 @@ jobs:
         run: |
           docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
+      ## Perfoming Test Before Pushing Image
+      - name: Create Docker Network
+        run: docker network create eis-network
+
+      - name: Start PostgreSQL Container
+        env:
+          TEST_DBNAME: testdb
+        run: |
+          docker run -d --name eis-postgres --network eis-network \
+            -e POSTGRES_USER=testdbuser \
+            -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+            -e POSTGRES_DB=$TEST_DBNAME \
+            -p 5432:5432 \
+            postgres:16
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if docker exec eis-postgres pg_isready -U testdbuser; then
+              echo "Postgres is ready"
+              break
+            fi
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
+      - name: Load test database with inventory schema
+        env:
+          TEST_DBNAME: testdb      
+        run: |
+          cd ${{ steps.locate.outputs.path }}
+          if [ -f "resources/database-schema/database-schema.sql" ]; then
+            echo "Creating Database Schema . . ."
+            docker cp ./resources/database-schema/eisinventory-schema.sql eis-postgres:/tmp/schema.sql
+            docker exec eis-postgres psql -U testdbuser -d $TEST_DBNAME -f /tmp/schema.sql
+          fi       
+
       - name: Run tests for ${{ matrix.project }}
         run: |
           cd ${{ steps.locate.outputs.path }}
