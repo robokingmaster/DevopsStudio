@@ -5,6 +5,10 @@ on:
     paths:
       - 'projects-demo/**'
 
+env:
+  APP_ENV: devlopment
+  APP_LOG_LEVEL: debug  
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -54,23 +58,25 @@ jobs:
 
       ## Perfoming Test Before Pushing Image
       - name: Create Docker Network
-        run: docker network create eis-network
+        run: docker network create docker-network
 
       - name: Start PostgreSQL Container
         env:
-          TEST_DBNAME: testdb
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
         run: |
-          docker run -d --name eis-postgres --network eis-network \
-            -e POSTGRES_USER=testdbuser \
-            -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-            -e POSTGRES_DB=$TEST_DBNAME \
+          docker run -d --name test-pgdb --network docker-network \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DB=$POSTGRESS_DBNAME \
             -p 5432:5432 \
             postgres:16
 
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
-            if docker exec eis-postgres pg_isready -U testdbuser; then
+            if docker exec test-pgdb pg_isready -U testdbuser; then
               echo "Postgres is ready"
               break
             fi
@@ -80,25 +86,44 @@ jobs:
 
       - name: Load test database with inventory schema
         env:
-          TEST_DBNAME: testdb      
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
         run: |
           cd ${{ steps.locate.outputs.path }}
           if [ -f "resources/database-schema/database-schema.sql" ]; then
             echo "Creating Database Schema . . ."
-            docker cp ./resources/database-schema/database-schema.sql eis-postgres:/tmp/schema.sql
-            docker exec eis-postgres psql -U testdbuser -d $TEST_DBNAME -f /tmp/schema.sql
+            docker cp ./resources/database-schema/database-schema.sql test-pgdb:/tmp/schema.sql
+            docker exec test-pgdb psql -U $POSTGRESS_DBUSER -d $POSTGRESS_DBNAME -f /tmp/schema.sql
           fi       
 
       - name: Run tests for ${{ matrix.project }}
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+          JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+          APP_DEFAULT_USER: ${{ secrets.APP_DEFAULT_USER }}
+          APP_DEFAULT_PWD: ${{ secrets.APP_DEFAULT_PWD }}    
         run: |
           cd ${{ steps.locate.outputs.path }}
           if [ -f "package.json" ]; then
             if grep -q '"react"' package.json; then
-              npm install
-              npm run test
-            else
-              npm install
-              npm test
+              docker run --rm --name app-testsuite --network docker-network \
+                -e INVENTORYDB_HOST=test-pgdb \
+                -e INVENTORYDB_PORT=5432 \
+                -e INVENTORYDB_USER=$INVENTORYDB_USER \
+                -e INVENTORYDB_PASSWORD=$DB_PASSWORD \
+                -e INVENTORYDB_NAME=$INVENTORYDB_NAME \
+                -e APP_ENV=$APP_ENV \
+                -e APP_PORT=5000 \
+                -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
+                -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
+                -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
+                -e APP_JWT_SECRET=$JWT_SECRET \
+                -p 5000:5000 \
+                ${{ matrix.project }}:temp \
+                npm test
             fi
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
