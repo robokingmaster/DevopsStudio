@@ -1,13 +1,9 @@
-name: PR Check - NodeJS Projects
+name: Validate Push
 
 on:
-  pull_request:
-    paths:
-      - 'nodejswebapps/**'
-
   push:
     paths:
-      - 'nodejswebapps/**'
+      - 'projects-demo/nodejs-web/**'
 
 jobs:
   detect-changes:

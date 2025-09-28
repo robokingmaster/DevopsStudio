@@ -1,11 +1,11 @@
-name: Publish - Project To GitHub
+name: Publish - Docker Images
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
-      - 'nodejswebapps/**'
+      - 'projects-demo/nodejs-web/**'
 
 jobs:
   detect-changes:
