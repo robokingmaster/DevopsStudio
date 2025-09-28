@@ -58,7 +58,7 @@ describe('🔐 Authentication Controller - Login', function () {
     logger.debug(`🚀 making API Call [POST] => /auth/login`);
     const res = await request(app)
       .post('/auth/login')
-      .send({ loginid: 'nouser@example.com', password: process.env.APP_DEFAULT_PWD });
+      .send({ loginid: process.env.APP_DEFAULT_USER, password: process.env.APP_DEFAULT_PWD });
 
     expect(res.status).to.equal(401);
     expect(res.body).to.have.property('message').that.includes('No user found');
