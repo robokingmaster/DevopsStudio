@@ -62,8 +62,11 @@ jobs:
             echo "No recognizable test setup found."            
           fi
 
-          echo "project_type    => $project_type"
-          echo "launch_database => $launch_database"
+      - name: Print project veriables
+        run: | 
+          echo "project_path    => ${{ steps.locate.outputs.path }}"
+          echo "project_type    => ${{ steps.locate.outputs.project_type }}"
+          echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
