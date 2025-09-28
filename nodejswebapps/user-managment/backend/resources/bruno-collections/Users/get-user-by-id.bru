@@ -1,0 +1,28 @@
+meta {
+  name: get-user-by-id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/api/users/user01
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+script:post-response {
+  function onResponse(res) {
+    const token = res.body.token;
+    bru.setEnvVar("authToken", token);
+  }
+  
+  onResponse(res);
+}
+
+settings {
+  encodeUrl: true
+}

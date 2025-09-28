@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+Dockerfile
+package-lock.json
+.dockerignore
+.env
+build
+coverage

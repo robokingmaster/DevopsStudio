@@ -1,0 +1,39 @@
+meta {
+  name: user-register
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/auth/register
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "loginid": "user01",
+    "password": "{{default_pwd}}",
+    "fullname": "New User",
+    "email": "testuser@example.com",
+    "phone_number": "9843218903",
+    "date_of_birth": "1985-10-15"
+  }
+}
+
+script:post-response {
+  function onResponse(res) {
+    const token = res.body.token;
+    bru.setEnvVar("authToken", token);
+  }
+  
+  onResponse(res);
+}
+
+settings {
+  encodeUrl: true
+}

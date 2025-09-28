@@ -1,0 +1,31 @@
+meta {
+  name: user-login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "loginid": "{{default_user}}",
+    "password": "{{default_pwd}}"
+  }
+}
+
+script:post-response {
+  function onResponse(res) {
+    const token = res.body.token;
+    bru.setEnvVar("authToken", token);
+  }
+  
+  onResponse(res);
+}
+
+settings {
+  encodeUrl: true
+}

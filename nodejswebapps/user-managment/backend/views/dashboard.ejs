@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <style>
+    body, html {
+      height: 25%;
+      margin: 0;
+    }
+    .center-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      flex-direction: column;
+      text-align: center;
+    }
+    li {
+      margin-bottom: 10px; /* Adds spacing between each line */
+    }
+  </style>
+</head>
+<body>
+  <div class="center-container">
+    <h2>Welcome <%= user.name || user.email %>!</h2>
+    <p>Now you can run API requests from browser!!</p>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <h3><a href="https://github.com/Pega-Cloud/eis-inventoryapi/tree/release/v6.1/resources/bruno-collections" target="_blank">Download Bruno API Collections</a></h3>
+  <ul>
+    <% if (Object.keys(categorizedApiCalls).length === 0) { %>
+    <p>No API calls found in Bruno collections.</p>
+    <% } else { %>
+    <% Object.keys(categorizedApiCalls).forEach(category => { %>
+        <h4><%= category %></h4>
+        <ul>
+        <% categorizedApiCalls[category].forEach(api => {
+            const displayUrl = api.url.includes('{{url}}') 
+                ? api.url.replace('{{url}}', baseUrl) 
+                : api.url;
+        %>
+          <li>
+              <strong><%= api.name %></strong> — <%= api.method %> 
+                <% if (api.method == "GET") { %>
+                  <a target="_blank" href=<%= displayUrl %>><%= displayUrl %> </a> [Auth: <%= api.authType %>]
+                <% }else{ %>
+                  <%= displayUrl %> [Auth: <%= api.authType %>]
+                <% } %>
+          </li>
+        <% }) %>
+        </ul>
+    <% }) %>
+    <% } %>
+  </ul>
+
+  <script>
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const result = await response.json();
+        alert(result.message || 'Logged out');
+        window.location.href = '/login';
+      } catch (err) {
+        alert('Logout failed');
+      }
+    });
+  </script>
+</body>
+</html>
