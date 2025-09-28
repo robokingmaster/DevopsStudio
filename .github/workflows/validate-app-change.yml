@@ -123,9 +123,23 @@ jobs:
               -p 5000:5000 \
               ${{ matrix.project }}:temp \
               npm test
+
+            echo "Waiting for container to start..."
+            sleep 30
+
+            echo "Checking if app is running..."
+
+            if ! curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:5000/login | grep -q "^200$"; then
+              echo "App failed to start application"
+              docker logs app-testsuite
+              exit 1
+            else
+              echo "✅ Application is up and responding to login page"
+            fi              
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
             pytest
           else
             echo "No recognizable test setup found."
           fi
+
