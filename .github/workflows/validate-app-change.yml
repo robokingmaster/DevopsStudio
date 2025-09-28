@@ -160,11 +160,11 @@ jobs:
               -p 5000:5000 \
               ${{ matrix.project }}:temp \
 
-            echo "Waiting for container to start..."
-            sleep 15
-
             if [ -f "views/login.html" ]; then
               echo "Checking if ${{ matrix.project }} app web login page is running..."
+
+              echo "Waiting for container to start..."
+              sleep 15              
 
               if ! curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:5000/login | grep -q "^200$"; then
                 echo "App failed to start application"
@@ -172,8 +172,10 @@ jobs:
                 exit 1
               else
                 echo "✅ Application ${{ matrix.project }} is up and responding to login page"
-              fi  
-            fi            
+              fi
+            else
+              exit 1
+            fi             
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
             pytest
