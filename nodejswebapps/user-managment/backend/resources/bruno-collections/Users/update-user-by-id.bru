@@ -1,0 +1,38 @@
+meta {
+  name: update-user-by-id
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{url}}/api/users/user01
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "password": "{{default_pwd}}",
+    "fullname": "New User",
+    "email": "testuser@example.com",
+    "phone_number": "9843218903",
+    "date_of_birth": "1985-10-15"
+  }
+}
+
+script:post-response {
+  function onResponse(res) {
+    const token = res.body.token;
+    bru.setEnvVar("authToken", token);
+  }
+  
+  onResponse(res);
+}
+
+settings {
+  encodeUrl: true
+}

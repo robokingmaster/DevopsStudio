@@ -1,0 +1,28 @@
+meta {
+  name: list-users
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+script:post-response {
+  function onResponse(res) {
+    const token = res.body.token;
+    bru.setEnvVar("authToken", token);
+  }
+  
+  onResponse(res);
+}
+
+settings {
+  encodeUrl: true
+}

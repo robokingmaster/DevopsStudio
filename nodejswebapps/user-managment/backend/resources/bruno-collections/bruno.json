@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "PortfolioViewAPI",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
