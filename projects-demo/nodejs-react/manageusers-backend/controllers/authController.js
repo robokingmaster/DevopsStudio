@@ -65,21 +65,21 @@ exports.login = async (req, res) => {
       res.status(400).json({ message: 'Login ID or Password not provided' });
     }else{
       const user = await Users.findByPk(loginid);
-      logger.debug('🔍 Retrived User Information From Database =>', JSON.stringify(user, null, 2));   
+      logger.debug(`🔍 Retrived User Information From Database => ${JSON.stringify(user, null, 2)}`);   
       if (!user){ 
-        logger.info('⚠️ No User Found With Email => '+loginid+' !');
+        logger.info(`⚠️ No User Found With LoginID => ${loginid} !`);
         return res.status(401).json({ message: 'No user found with loginid:'+loginid});        
       }else{ 
         logger.info('🔍 Verifying Password'); 
         if (!(await bcrypt.compare(password, user.pwdhash))) {
           logger.warn(`🔐 Login failed for ${loginid}`);
-          logger.debug('Login Password:', password);
-          logger.debug('Login Password Hashed:', await bcrypt.hash(password, 10));
-          logger.debug('Stored Hashed Password:', user.pwdhash);
+          logger.debug(`Login Password: ${password}`);
+          logger.debug(`Login Password Hashed: ${await bcrypt.hash(password, 10)}`);
+          logger.debug(`Stored Hashed Password: ${user.pwdhash}`);
           logger.info('⛔ Invalid Login Credentials');
           return res.status(401).json({ message: 'Invalid credentials' });
         }else{
-          logger.info(`🔓 Login successful for => ${loginid}`);
+          logger.info(`🔓 Login successful for => ${loginid}`);          
           const token = jwt.sign({ loginid: user.loginid, email: user.email }, process.env.APP_JWT_SECRET, { expiresIn: '1h' });
           logger.debug('🧿 Generated Token Generated');
           // res.json({ token, user });

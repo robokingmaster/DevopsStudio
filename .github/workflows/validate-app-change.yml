@@ -5,6 +5,10 @@ on:
     paths:
       - 'projects-demo/**'
 
+env:
+  APP_ENV: devlopment
+  APP_LOG_LEVEL: debug  
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -16,17 +20,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch base branch
-        run: git fetch origin ${{ github.base_ref }}
-
       - name: Get changed project folders
         id: set
         run: |
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }} |
+          CHANGED=$(git diff --name-only HEAD^ HEAD |
             grep '^projects-demo/' |
-            awk -F'/' '{print $1"/"$2"/"$3}' |
+            awk -F'/' '{print $3}' |
             sort -u)
-          
+
           if [ -z "$CHANGED" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
@@ -45,10 +46,105 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Locate project information
+        id: locate
+        run: |
+          PROJECT_PATH=$(find projects-demo -type d -name "${{ matrix.project }}" | head -n 1)
+          echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
+
+          if [ -f "$PROJECT_PATH/package.json" ]; then
+            echo "project_type=nodejs" >> $GITHUB_OUTPUT
+            echo "launch_database=true" >> $GITHUB_OUTPUT
+          elif [ -f "$PROJECT_PATH/requirements.txt" ]; then
+            echo "project_type=python" >> $GITHUB_OUTPUT
+            echo "launch_database=false" >> $GITHUB_OUTPUT
+          else
+            echo "No recognizable test setup found."       
+          fi
+
+      - name: Print project veriables
+        run: | 
+          echo "project_path    => ${{ steps.locate.outputs.path }}"
+          echo "project_type    => ${{ steps.locate.outputs.project_type }}"
+          echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
+
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t devopsstudio-temp:${{ matrix.project }} ./${{ matrix.project }}
+          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
-      - name: Run tests for ${{ matrix.project }}
+      ## Perfoming Test Before Pushing Image
+      - name: Create Docker Network
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
+        run: docker network create docker-network
+
+      - name: Start PostgreSQL Container
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
         run: |
-          docker run --rm devopsstudio-temp:${{ matrix.project }} npm test
+          docker run -d --name test-pgdb --network docker-network \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DB=$POSTGRESS_DBNAME \
+            -p 5432:5432 \
+            postgres:16
+
+      - name: Wait for Postgres
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}      
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}      
+        run: |
+          for i in {1..30}; do
+            if docker exec test-pgdb pg_isready -U $POSTGRESS_DBUSER; then
+              echo "Postgres is ready"
+              break
+            fi
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
+      - name: Load test database with inventory schema
+        if: ${{ steps.locate.outputs.launch_database == 'true' }} 
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+        run: |
+          cd ${{ steps.locate.outputs.path }}
+          if [ -f "resources/database-schema/database-schema.sql" ]; then
+            echo "Creating Database Schema . . ."
+            docker cp ./resources/database-schema/database-schema.sql test-pgdb:/tmp/schema.sql
+            docker exec test-pgdb psql -U $POSTGRESS_DBUSER -d $POSTGRESS_DBNAME -f /tmp/schema.sql
+          fi       
+
+      - name: Run NodeJs tests suites for ${{ matrix.project }}
+        if: ${{ steps.locate.outputs.launch_database == 'true' && steps.locate.outputs.project_type == 'nodejs' }} 
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+          APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+          APP_DEFAULT_USER: ${{ secrets.APP_DEFAULT_USER }}
+          APP_DEFAULT_PWD: ${{ secrets.APP_DEFAULT_PWD }}    
+        run: |
+          cd ${{ steps.locate.outputs.path }}
+          docker run --rm --name app-testsuite --network docker-network \
+            -e DATABASE_HOST=test-pgdb \
+            -e DATABASE_PORT=5432 \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DBNAME=$POSTGRESS_DBNAME \
+            -e APP_ENV=$APP_ENV \
+            -e APP_PORT=5000 \
+            -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
+            -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
+            -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
+            -e APP_JWT_SECRET=$APP_JWT_SECRET \
+            -p 5000:5000 \
+            ${{ matrix.project }}:temp \
+            npm test           
+

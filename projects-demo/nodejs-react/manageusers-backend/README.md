@@ -1,6 +1,6 @@
-## Backend Configuration
+## Manage User Backend
 
-### Create .env file
+### Create .env file for environemnt veriables
 Create .env file with below content. Replace X with actual values
 ```
 DATABASE_HOST=localhost               ## When App Running on host 
@@ -39,9 +39,8 @@ npm start
 All the profile picture will be stored in uploads directory
 
 ### Default Admin Credentials
-Below are the default admin account which will be added into database for initial login.
-Once application is up and running this use need to be updated or deleted.
-```
-User Name: admin@example.com
-Password : admin@123
-```
+Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD.
+
+## Running on kubernetes
+To run this project on Kubernetes, make sure postgres database provisioned. 
+Than run database sql file present in resources/database-schema/database-schema.sql folder of the application.
