@@ -85,7 +85,7 @@ jobs:
           cd ${{ steps.locate.outputs.path }}
           if [ -f "resources/database-schema/database-schema.sql" ]; then
             echo "Creating Database Schema . . ."
-            docker cp ./resources/database-schema/eisinventory-schema.sql eis-postgres:/tmp/schema.sql
+            docker cp ./resources/database-schema/database-schema.sql eis-postgres:/tmp/schema.sql
             docker exec eis-postgres psql -U testdbuser -d $TEST_DBNAME -f /tmp/schema.sql
           fi       
 
