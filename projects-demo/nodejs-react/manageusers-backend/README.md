@@ -39,9 +39,4 @@ npm start
 All the profile picture will be stored in uploads directory
 
 ### Default Admin Credentials
-Below are the default admin account which will be added into database for initial login.
-Once application is up and running this use need to be updated or deleted.
-```
-User Name: admin@example.com
-Password : admin@123
-```
+Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD
