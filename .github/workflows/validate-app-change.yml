@@ -163,15 +163,17 @@ jobs:
             echo "Waiting for container to start..."
             sleep 15
 
-            echo "Checking if app is running..."
+            if [ -f "views/login.html" ]; then
+              echo "Checking if ${{ matrix.project }} app web login page is running..."
 
-            if ! curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:5000/login | grep -q "^200$"; then
-              echo "App failed to start application"
-              docker logs ${{ matrix.project }}
-              exit 1
-            else
-              echo "✅ Application ${{ matrix.project }} is up and responding to login page"
-            fi              
+              if ! curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:5000/login | grep -q "^200$"; then
+                echo "App failed to start application"
+                docker logs ${{ matrix.project }}
+                exit 1
+              else
+                echo "✅ Application ${{ matrix.project }} is up and responding to login page"
+              fi  
+            fi            
           elif [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
             pytest

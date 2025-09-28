@@ -42,3 +42,4 @@ All the profile picture will be stored in uploads directory
 Default admin credentials wil be same as defined in .env file as APP_DEFAULT_USER and APP_DEFAULT_PASSWORD.
 
 ## Running on kubernetes
+To run this project on Kubernetes
