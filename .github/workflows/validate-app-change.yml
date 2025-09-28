@@ -1,4 +1,4 @@
-name: Validate Push
+name: PR Validation Job
 
 on:
   pull_request:
@@ -24,7 +24,7 @@ jobs:
         run: |
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }} |
             grep '^projects-demo/' |
-            awk -F'/' '{print $1"/"$2"/"$3}' |
+            awk -F'/' '{print $3}' |
             sort -u)
           
           if [ -z "$CHANGED" ]; then
@@ -47,8 +47,8 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t devopsstudio-temp:${{ matrix.project }} ./${{ matrix.project }}
+          docker build -t ${{ matrix.project }}:temp ./${{ matrix.project }}
 
       - name: Run tests for ${{ matrix.project }}
         run: |
-          docker run --rm devopsstudio-temp:${{ matrix.project }} npm test
+          docker run --rm ${{ matrix.project }}:temp npm test
