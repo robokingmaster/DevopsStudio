@@ -7,6 +7,7 @@ import '../css-styles/navbar.css';
 import { Navbar, Nav, NavDropdown, Form, FormControl, Button, Container } from 'react-bootstrap';
 
 const API = require('../api')
+const backendurl = process.env.REACT_APP_BACKEND_API_BASE
 
 const AppNavbar = () => {
   const { user, logout } = useAuth();
@@ -43,7 +44,7 @@ const AppNavbar = () => {
           <Nav className="justify-content-right">
              <div className="navbar-userprofile">
                 <Nav.Link href="/dashboard">
-                  <img src={user.profile_image ? `http://localhost:5000/uploads/${user.profile_image}` : `http://localhost:5000/uploads/default.jpeg`}
+                  <img src={user.profile_image ? `${backendurl}/uploads/${user.profile_image}` : `${backendurl}/uploads/default.jpeg`}
                       alt="Profile"
                       style={{ width: '35px', height: '35px', borderRadius: '50%', marginRight: '10px' }}
                   />

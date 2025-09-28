@@ -4,5 +4,4 @@ Dockerfile
 package-lock.json
 .dockerignore
 .env
-build
 coverage
