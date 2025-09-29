@@ -3,9 +3,17 @@ name: Publish - Docker Images
 on:
   pull_request:
     branches:
-      - main
+      - 'release/**'
     paths:
-      - 'projects-demo/nodejs-web/**'
+      - 'projects-demo/**'
+    types:
+      - closed      
+  workflow_dispatch:
+    paths:
+      - 'projects-demo/**'      
+env:
+  APP_ENV: devlopment
+  APP_LOG_LEVEL: debug  
 
 jobs:
   detect-changes:
@@ -16,42 +24,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2  # Required for HEAD^ HEAD diff
+          fetch-depth: 0
 
-      - name: Get changed folders
+      - name: Get changed project folders
         id: set
         run: |
-          echo "🔍 Detecting changes under nodejswebapps/..."
-          CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^nodejswebapps/' | cut -d'/' -f2 | sort -u | uniq)
-          echo "Raw changed items: $CHANGED"
+          CHANGED=$(git diff --name-only HEAD^ HEAD |
+            grep '^projects-demo/' |
+            awk -F'/' '{print $3}' |
+            sort -u)
 
-          FOLDERS=""
-          for item in $CHANGED; do
-            if [ -d "nodejswebapps/$item" ]; then
-              echo "✅ Found folder: nodejswebapps/$item"
-              FOLDERS="$FOLDERS $item"
-            else
-              echo "❌ Skipping non-folder: nodejswebapps/$item"
-            fi
-          done
-
-          echo "Filtered folders: $FOLDERS"
-
-          if [ -z "$FOLDERS" ]; then
+          if [ -z "$CHANGED" ]; then
             echo "changed=[]" >> $GITHUB_OUTPUT
           else
-            JSON=$(echo "$FOLDERS" | jq -R -s -c 'split(" ") | map(select(length > 0))')
-            echo "Final JSON: $JSON"
+            JSON=$(echo "$CHANGED" | jq -R . | jq -s . | tr -d '\n')
             echo "changed=$JSON" >> $GITHUB_OUTPUT
           fi
 
-      - name: Debug changed_projects output
-        run: |
-          echo "🔧 Output to matrix: ${{ steps.set.outputs.changed }}"
-
-  build-and-push:
+  build-and-test:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed_projects != '[]'
+    if: needs.detect-changes.outputs.changed_projects != '[]' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,75 +52,107 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-
-      - name: Auto-detect version from package.json
-        id: get_project
+      - name: Locate project information
+        id: locate
         run: |
-          PROJECT_NAME="$(echo "${{ matrix.project }}" | tr -d '\n' | tr -d '\r')"
-          echo "📦 Identified Project Name As: $PROJECT_NAME"
-          PACKAGE_JSON="nodejswebapps/$PROJECT_NAME/package.json"
-          echo "📦 Looking for package.json at: $PACKAGE_JSON"
+          PROJECT_PATH=$(find projects-demo -type d -name "${{ matrix.project }}" | head -n 1)
+          echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
 
-          if [ ! -f "$PACKAGE_JSON" ]; then
-            echo "❌ No package.json found at $PACKAGE_JSON"
-            exit 1
+          if [ -f "$PROJECT_PATH/package.json" ]; then
+            echo "project_type=nodejs" >> $GITHUB_OUTPUT
+            echo "launch_database=true" >> $GITHUB_OUTPUT
+            echo "project_version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+          elif [ -f "$PROJECT_PATH/requirements.txt" ]; then
+            echo "project_type=python" >> $GITHUB_OUTPUT
+            echo "launch_database=false" >> $GITHUB_OUTPUT
+          else
+            echo "No recognizable test setup found."       
           fi
 
-          VERSION=$(jq -r .version "$PACKAGE_JSON")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "projectname=$PROJECT_NAME" >> $GITHUB_OUTPUT
+      - name: Print project veriables
+        run: | 
+          echo "project_path    => ${{ steps.locate.outputs.path }}"
+          echo "project_type    => ${{ steps.locate.outputs.project_type }}"
+          echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
+          echo "project_version => ${{ steps.locate.outputs.project_version }}"
 
-      - name: Build and push Docker image
+      - name: Build Docker image for ${{ matrix.project }}
         run: |
-          IMAGE_BASE="robokingmaster/${{ steps.get_project.outputs.projectname }}"
-          VERSION_TAG="${IMAGE_BASE}:${{ steps.get_project.outputs.version }}"
-          LATEST_TAG="${IMAGE_BASE}:latest"
+          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
-          docker build -t $VERSION_TAG -t $LATEST_TAG ./nodejswebapps/${{ steps.get_project.outputs.projectname }}
-          docker push $VERSION_TAG
-          docker push $LATEST_TAG
+      ## Perfoming Test Before Pushing Image
+      - name: Create Docker Network
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
+        run: docker network create docker-network
 
-      - name: Send Success Email
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ Build Succeeded: ${{ github.workflow }} #${{ github.run_number }}"
-          to: ${{ secrets.EMAIL_RECIPIENT }}
-          from: ${{ secrets.EMAIL_USERNAME }}
-          body: |
-            🎉 The build completed successfully!
-            - Project Name: ${{ steps.get_project.outputs.projectname }}
-            - Workflow: ${{ github.workflow }}
-            - Run Number: ${{ github.run_number }}
-            - Commit: ${{ github.sha }}
-            - Actor: ${{ github.actor }}
-            - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Start PostgreSQL Container
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+        run: |
+          docker run -d --name test-pgdb --network docker-network \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DB=$POSTGRESS_DBNAME \
+            -p 5432:5432 \
+            postgres:16
 
-      - name: Send Failure Email
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ Build Failed: ${{ github.workflow }} #${{ github.run_number }}"
-          to: ${{ secrets.EMAIL_RECIPIENT }}
-          from: ${{ secrets.EMAIL_USERNAME }}
-          body: |
-            🚨 The build has failed.
-            - Project Name: ${{ steps.get_project.outputs.projectname }}
-            - Workflow: ${{ github.workflow }}
-            - Run Number: ${{ github.run_number }}
-            - Commit: ${{ github.sha }}
-            - Actor: ${{ github.actor }}
-            - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Wait for Postgres
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}      
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}      
+        run: |
+          for i in {1..30}; do
+            if docker exec test-pgdb pg_isready -U $POSTGRESS_DBUSER; then
+              echo "Postgres is ready"
+              break
+            fi
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
+      - name: Load test database with inventory schema
+        if: ${{ steps.locate.outputs.launch_database == 'true' }} 
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+        run: |
+          cd ${{ steps.locate.outputs.path }}
+          if [ -f "resources/database-schema/database-schema.sql" ]; then
+            echo "Creating Database Schema . . ."
+            docker cp ./resources/database-schema/database-schema.sql test-pgdb:/tmp/schema.sql
+            docker exec test-pgdb psql -U $POSTGRESS_DBUSER -d $POSTGRESS_DBNAME -f /tmp/schema.sql
+          fi       
+
+      - name: Run NodeJs tests suites for ${{ matrix.project }}
+        if: ${{ steps.locate.outputs.launch_database == 'true' && steps.locate.outputs.project_type == 'nodejs' }} 
+        env:
+          POSTGRESS_DBNAME: ${{ secrets.POSTGRESS_DBNAME }}
+          POSTGRESS_DBUSER: ${{ secrets.POSTGRESS_DBUSER }}
+          POSTGRESS_DBPASSWORD: ${{ secrets.POSTGRESS_DBPASSWORD }}
+          APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+          APP_DEFAULT_USER: ${{ secrets.APP_DEFAULT_USER }}
+          APP_DEFAULT_PWD: ${{ secrets.APP_DEFAULT_PWD }}    
+        run: |
+          cd ${{ steps.locate.outputs.path }}
+          docker run --rm --name app-testsuite --network docker-network \
+            -e DATABASE_HOST=test-pgdb \
+            -e DATABASE_PORT=5432 \
+            -e POSTGRES_USER=$POSTGRESS_DBUSER \
+            -e POSTGRES_PASSWORD=$POSTGRESS_DBPASSWORD \
+            -e POSTGRES_DBNAME=$POSTGRESS_DBNAME \
+            -e APP_ENV=$APP_ENV \
+            -e APP_PORT=5000 \
+            -e APP_LOG_LEVEL=$APP_LOG_LEVEL \
+            -e APP_DEFAULT_USER=$APP_DEFAULT_USER \
+            -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
+            -e APP_JWT_SECRET=$APP_JWT_SECRET \
+            -p 5000:5000 \
+            ${{ matrix.project }}:temp \
+            npm test           
+
