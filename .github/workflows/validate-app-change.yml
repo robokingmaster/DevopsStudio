@@ -52,10 +52,12 @@ jobs:
           PROJECT_PATH=$(find projects-demo -type d -name "${{ matrix.project }}" | head -n 1)
           echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
 
-          if [ -f "$PROJECT_PATH/package.json" ]; then
+          cd $PROJECT_PATH
+          if [ -f "package.json" ]; then
             echo "project_type=nodejs" >> $GITHUB_OUTPUT
             echo "launch_database=true" >> $GITHUB_OUTPUT
-          elif [ -f "$PROJECT_PATH/requirements.txt" ]; then
+            echo "project_version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+          elif [ -f "requirements.txt" ]; then
             echo "project_type=python" >> $GITHUB_OUTPUT
             echo "launch_database=false" >> $GITHUB_OUTPUT
           else
@@ -67,6 +69,7 @@ jobs:
           echo "project_path    => ${{ steps.locate.outputs.path }}"
           echo "project_type    => ${{ steps.locate.outputs.project_type }}"
           echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
+          echo "project_version => ${{ steps.locate.outputs.project_version }}"
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
