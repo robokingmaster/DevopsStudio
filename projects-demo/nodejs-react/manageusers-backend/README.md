@@ -47,3 +47,4 @@ Than run database sql file present in resources/database-schema/database-schema.
 
 ### Run via helm chart
 
+
