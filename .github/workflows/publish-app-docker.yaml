@@ -3,14 +3,18 @@ name: Publish - Docker Images
 on:
   pull_request:
     branches:
-      - 'release/**'
+      - 'main'
     paths:
       - 'projects-demo/**'
     types:
       - closed
 env:
   APP_ENV: devlopment
-  APP_LOG_LEVEL: debug  
+  APP_LOG_LEVEL: debug 
+  REPOSITORY_NAME: robokingmaster
+  REPOSITORY_SERVER: https://registry.hub.docker.com
+  EMAIL_RECIPIENT: robokingmaster@gmail.com
+  DOCKER_HOST: unix:///var/run/docker.sock   
 
 jobs:
   detect-changes:
@@ -76,7 +80,7 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
+          docker build -t ${{ matrix.project }}:${{ steps.locate.outputs.project_version }} ${{ steps.locate.outputs.path }}
 
       ## Perfoming Test Before Pushing Image
       - name: Create Docker Network
@@ -151,6 +155,59 @@ jobs:
             -e APP_DEFAULT_PWD=$APP_DEFAULT_PWD \
             -e APP_JWT_SECRET=$APP_JWT_SECRET \
             -p 5000:5000 \
-            ${{ matrix.project }}:temp \
+            ${{ matrix.project }}:${{ steps.locate.outputs.project_version }} \
             npm test           
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Push Docker Image
+        run: |
+          docker tag ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }} ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
+          docker push ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
+
+      # ✅ Send email on success
+      - name: Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Build Succeeded: ${{ github.workflow }} #${{ github.run_number }}"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          body: |
+            🎉 The build completed successfully!
+            - ''
+            - Docker Image => ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }} Now Available..
+            - Workflow: ${{ github.workflow }}
+            - Run Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Actor: ${{ github.actor }}
+            - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # ❌ Send email on failure
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ Build Failed: ${{ github.workflow }} #${{ github.run_number }}"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          body: |
+            🚨 The build has failed.
+            - Workflow: ${{ github.workflow }}
+            - Run Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Actor: ${{ github.actor }}
+            - Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
