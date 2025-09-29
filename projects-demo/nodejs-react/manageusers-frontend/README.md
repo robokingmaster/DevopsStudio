@@ -15,4 +15,3 @@ To start application in non debug mode run below command
 ```
 npm start
 ```
-
