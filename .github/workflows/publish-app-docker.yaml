@@ -166,8 +166,8 @@ jobs:
 
       - name: Push Docker Image
         run: |
-          docker tag ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }} ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
-          docker push ${{ env.REPOSITORY_NAME }}${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
+          docker tag ${{ matrix.project }}:${{ steps.locate.outputs.project_version }} ${{ env.REPOSITORY_NAME }}/${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
+          docker push ${{ env.REPOSITORY_NAME }}/${{ matrix.project }}:${{ steps.locate.outputs.project_version }}
 
       # ✅ Send email on success
       - name: Send Success Email
