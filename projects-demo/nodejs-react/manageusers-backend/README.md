@@ -46,3 +46,4 @@ To run this project on Kubernetes, make sure postgres database provisioned.
 Than run database sql file present in resources/database-schema/database-schema.sql folder of the application.
 
 ### Run via helm chart
+
