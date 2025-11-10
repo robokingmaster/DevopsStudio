@@ -1,5 +1,18 @@
-## Pre-Requisites
+## Creating Environment In Docker Image
+### Building Docker Image
+docker-compose up --build
 
+### Cleaning Up Docker Intermediate Containers
+docker-compose down --remove-orphans
+
+### Run the container and attach
+docker-compose run k8s-kind-cluster
+
+### Attach to container
+docker exec -it k8s-kind-cluster bash
+
+## Creating Environment on VM/EC2 Instance
+## Pre-Requisites
 - Provision and Connecte To Ubuntu virtual machine
 - Install required packages as
   ```bash
@@ -18,9 +31,9 @@
 
 - Create a 3-node Kubernetes cluster using Kind:
   ```bash
-  kind create cluster --config=config.yml
+  kind create cluster --config=kind-config.yml
 
-  ubuntu$ kind create cluster --config=config.yml
+  ubuntu$ kind create cluster --config=kind-config.yml
     Creating cluster "kind" ...
     ✓ Ensuring node image (kindest/node:v1.33.0) 🖼
     ✓ Preparing nodes 📦 📦 📦
