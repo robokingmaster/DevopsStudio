@@ -117,8 +117,9 @@ jobs:
           if [ -f "$DOCKERFILE" ]; then
             grep -niE '^(ENTRYPOINT|CMD)\b' "$DOCKERFILE" || true
           else
-            echo "No Dockerfile      echo "No Dockerfile at $DOCKERFILE"
-
+            echo "No Dockerfile at $DOCKERFILE"
+          fi
+          
       ## Perfoming Test Before Pushing Image
       # Starts container with APP_COLOR and curls the home page to ensure a 200 response.
 
