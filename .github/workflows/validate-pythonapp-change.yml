@@ -1,0 +1,129 @@
+name: Validate Push
+
+on:
+  push:
+    paths:
+      - 'samples-python/webapps/**'
+
+env:
+  APP_COLOR: blue
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_projects: ${{ steps.set.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get changed project folders
+        id: set
+        run: |
+          CHANGED=$(git diff --name-only HEAD^ HEAD |
+            grep '^samples-python/webapps/' |
+            awk -F'/' '{print $3}' |
+            sort -u)
+
+          if [ -z "$CHANGED" ]; then
+            echo "changed=[]" >> $GITHUB_OUTPUT
+          else
+            JSON=$(echo "$CHANGED" | jq -R . | jq -s . | tr -d '\n')
+            echo "changed=$JSON" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed_projects != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJson(needs.detect-changes.outputs.changed_projects) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Locate project information
+        id: locate
+        run: |
+          PROJECT_PATH=$(find samples-python/webapps -type d -name "${{ matrix.project }}" | head -n 1)
+          echo "path=$PROJECT_PATH" >> $GITHUB_OUTPUT
+
+          cd $PROJECT_PATH
+          if [ -f "requirements.txt" ]; then
+            echo "project_type=python" >> $GITHUB_OUTPUT
+            echo "launch_database=false" >> $GITHUB_OUTPUT
+          else
+            echo "No recognizable requirements setup found."       
+          fi
+
+      # -------------------------------
+      # Detect version dynamically
+      # -------------------------------
+      - name: Detect version from Dockerfile or filename
+        id: version
+        run: |
+          set -e
+          PROJECT_PATH="${{ steps.locate.outputs.path }}"
+          VERSION=""
+          DOCKERFILE=""
+
+          # Prefer Dockerfile, otherwise pick first Dockerfile variant
+          if [ -f "$PROJECT_PATH/Dockerfile" ]; then
+            DOCKERFILE="$PROJECT_PATH/Dockerfile"
+          else
+            DOCKERFILE=$(ls "$PROJECT_PATH"/Dockerfile* 2>/dev/null | head -n 1 || true)
+          fi
+
+          # 1) From LABEL version="x.y.z"
+          if [ -z "$VERSION" ] && [ -n "$DOCKERFILE" ]; then
+            VERSION=$(grep -Eoi 'LABEL[^#]*version[[:space:]]*=[[:space:]]*"?([^" ]+)"?' "$DOCKERFILE" \
+              | sed -E 's/.*version[[:space:]]*=[[:space:]]*"?([^" ]+)"?.*/\1/' \
+              | head -n 1)
+          fi
+
+          # 2) From OCI label org.opencontainers.image.version
+          if [ -z "$VERSION" ] && [ -n "$DOCKERFILE" ]; then
+            VERSION=$(grep -Eoi 'org\.opencontainers\.image\.version[[:space:]]*=[[:space:]]*"?([^" ]+)"?' "$DOCKERFILE" \
+              | sed -E 's/.*org\.opencontainers\.image\.version[[:space:]]*=[[:space:]]*"?([^" ]+)"?.*/\1/' \
+              | head -n 1)
+          fi
+
+
+      - name: Print project veriables
+        run: | 
+          echo "project_path    => ${{ steps.locate.outputs.path }}"
+          echo "project_type    => ${{ steps.locate.outputs.project_type }}"
+          echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
+          echo "project_version => ${{ steps.version.outputs.value }}"
+          echo "dockerfile      => ${{ steps.version.outputs.dockerfile }}
+
+      - name: Build Docker image for ${{ matrix.project }}
+        run: |
+          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
+
+      ## Perfoming Test Before Pushing Image
+      # Starts container with APP_COLOR and curls the home page to ensure a 200 response.
+      - name: Sanity check app (APP_COLOR)
+        if: ${{ steps.locate.outputs.project_type == 'python' }}
+        env:
+          APP_COLOR: ${{ env.APP_COLOR }}
+        run: |
+          set -e
+          VERSION="${{ steps.version.outputs.value }}"
+          IMAGE="${{ matrix.project }}:${VERSION}"
+          CID=$(docker run -d -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}")
+          # Wait a moment and then curl
+          for i in {1..15}; do
+            if curl -fsS http://localhost:8080/ >/dev/null; then
+              echo "App responded OK"
+              break
+            fi
+            echo "Waiting for app..."
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/ | head -c 300
+  
+
