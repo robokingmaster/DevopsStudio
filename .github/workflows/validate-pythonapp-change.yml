@@ -109,26 +109,29 @@ jobs:
         if: ${{ steps.locate.outputs.project_type == 'python' }}
         env:
           APP_COLOR: ${{ env.APP_COLOR }}
+        shell: bash
         run: |
           set -euo pipefail
-          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.version }}"
+
+          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.value }}"
 
           # Run the container (no -p; we'll test from inside)
           docker rm -f app-under-test >/dev/null 2>&1 || true
           docker run -d --name app-under-test -e APP_COLOR="$APP_COLOR" "${IMAGE}"
 
-          # Wait until healthy or port is listening
+          # Wait until healthy OR port 8080 is listening inside the container
           tries=30
           while [ $tries -gt 0 ]; do
             status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-health{{end}}' app-under-test)
-            # Check TCP 8080 from inside the container; exit code 0 means listening
-            if docker exec app-under-test python - <<'PY' >/dev/null 2>&1; then
-              import socket, time
-              s = socket.socket()
-              s.settimeout(0.5)
-              rc = s.connect_ex(("127.0.0.1", 8080))
-              raise SystemExit(0 if rc == 0 else 1)
-            PY
+
+            # Check TCP 8080 from inside the container (exit 0 when listening)
+            if cat <<'PY' | docker exec -i app-under-test python - >/dev/null 2>&1; then
+import socket
+s = socket.socket()
+s.settimeout(0.5)
+rc = s.connect_ex(("127.0.0.1", 8080))
+raise SystemExit(0 if rc == 0 else 1)
+PY
             then
               echo "Port 8080 is listening (status=$status)"
               break
@@ -150,12 +153,10 @@ jobs:
             exit 1
           fi
 
-          # Perform HTTP GET from inside the container to avoid runner/DinD networking issues
-          docker exec app-under-test python - <<'PY'
-            import urllib.request
-            print(urllib.request.urlopen("http://127.0.0.1:8080/").read().decode()[:300])
-          PY
-
-
-  
-
+          # Perform HTTP GET from inside the container
+          cat <<'PY' | docker exec -i app-under-test python -
+import urllib.request
+print(urllib.request.urlopen("http://127.0.0.1:8080/").read().decode()[:300])
+PY
+        # Clean up
+        docker rm -f app-under-test >/dev/null 2>&1 || true
