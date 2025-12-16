@@ -128,33 +128,33 @@ jobs:
               s.settimeout(0.5)
               rc = s.connect_ex(("127.0.0.1", 8080))
               raise SystemExit(0 if rc == 0 else 1)
-              PY
-                          then
-                            echo "Port 8080 is listening (status=$status)"
-                            break
-                          fi
+            PY
+            then
+              echo "Port 8080 is listening (status=$status)"
+              break
+            fi
 
-                          if [ "$status" = "unhealthy" ]; then
-                            echo "::warning::Container reports unhealthy; showing logs"
-                            docker logs --tail=200 app-under-test || true
-                          fi
+            if [ "$status" = "unhealthy" ]; then
+              echo "::warning::Container reports unhealthy; showing logs"
+              docker logs --tail=200 app-under-test || true
+            fi
 
-                          echo "Waiting for app... (status=$status)"
-                          tries=$((tries - 1))
-                          sleep 2
-                        done
+            echo "Waiting for app... (status=$status)"
+            tries=$((tries - 1))
+            sleep 2
+          done
 
-                        if [ $tries -eq 0 ]; then
-                          echo "::error::App did not start. Container logs follow:"
-                          docker logs app-under-test || true
-                          exit 1
-                        fi
+          if [ $tries -eq 0 ]; then
+            echo "::error::App did not start. Container logs follow:"
+            docker logs app-under-test || true
+            exit 1
+          fi
 
-                        # Perform HTTP GET from inside the container to avoid runner/DinD networking issues
-                        docker exec app-under-test python - <<'PY'
-              import urllib.request
-              print(urllib.request.urlopen("http://127.0.0.1:8080/").read().decode()[:300])
-              PY
+          # Perform HTTP GET from inside the container to avoid runner/DinD networking issues
+          docker exec app-under-test python - <<'PY'
+            import urllib.request
+            print(urllib.request.urlopen("http://127.0.0.1:8080/").read().decode()[:300])
+          PY
 
 
   
