@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.value }}"
+          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.version }}"
 
           # Run the container (no host port mapping is necessary since we test from inside)
           docker rm -f app-under-test >/dev/null 2>&1 || true
