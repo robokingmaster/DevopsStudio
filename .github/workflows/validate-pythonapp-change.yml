@@ -99,6 +99,10 @@ jobs:
         run: |
           docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
+      - name: Create Docker Network
+        if: ${{ steps.locate.outputs.launch_database == 'true' }}
+        run: docker network create docker-network
+
       ## Perfoming Test Before Pushing Image
       # Starts container with APP_COLOR and curls the home page to ensure a 200 response.
       - name: Sanity check app (APP_COLOR)
@@ -109,7 +113,7 @@ jobs:
           set -e
           VERSION="${{ steps.version.outputs.value }}"
           IMAGE="${{ matrix.project }}:temp"
-          CID=$(docker run -d -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}")
+          CID=$(docker run -d --network docker-network -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}")
           # Wait a moment and then curl
           for i in {1..15}; do
             if curl -fsS http://localhost:8080/ >/dev/null; then
