@@ -117,7 +117,7 @@ jobs:
 
           # Run the container (no host port mapping is necessary since we test from inside)
           docker rm -f app-under-test >/dev/null 2>&1 || true
-          docker run -d --name app-under-test -e APP_COLOR="$APP_COLOR" "${IMAGE}"
+          docker run -d --name app-under-test --network docker-network -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}"
 
           # Wait until port 8080 is listening inside the container (up to ~60s)
           tries=30
