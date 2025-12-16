@@ -104,24 +104,59 @@ jobs:
 
       ## Perfoming Test Before Pushing Image
       # Starts container with APP_COLOR and curls the home page to ensure a 200 response.
-      - name: Sanity check app (APP_COLOR)
+
+      - name: Sanity check app (APP_COLOR) — resilient
         if: ${{ steps.locate.outputs.project_type == 'python' }}
         env:
           APP_COLOR: ${{ env.APP_COLOR }}
         run: |
-          set -e
+          set -euo pipefail
           VERSION="${{ steps.version.outputs.value }}"
-          IMAGE="${{ matrix.project }}:temp"
-          CID=$(docker run -d --network docker-network -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}")
-          # Wait a moment and then curl
-          for i in {1..15}; do
-            if curl -fsS http://localhost:8080/ >/dev/null; then
-              echo "App responded OK"
-              break
-            fi
-            echo "Waiting for app..."
-            sleep 2
-          done
-          curl -fsS http://localhost:8080/ | head -c 300
+          IMAGE="${{ matrix.project }}:${VERSION}"
+
+          # Run the container (no -p; we'll test from inside)
+          docker rm -f app-under-test >/dev/null 2>&1 || true
+          docker run -d --name app-under-test -e APP_COLOR="$APP_COLOR" "${IMAGE}"
+
+          # Wait until healthy or port is listening
+          tries=30
+          while [ $tries -gt 0 ]; do
+            status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-health{{end}}' app-under-test)
+            # Check TCP 8080 from inside the container; exit code 0 means listening
+            if docker exec app-under-test python - <<'PY' >/dev/null 2>&1; then
+              import socket, time
+              s = socket.socket()
+              s.settimeout(0.5)
+              rc = s.connect_ex(("127.0.0.1", 8080))
+              raise SystemExit(0 if rc == 0 else 1)
+              PY
+                          then
+                            echo "Port 8080 is listening (status=$status)"
+                            break
+                          fi
+
+                          if [ "$status" = "unhealthy" ]; then
+                            echo "::warning::Container reports unhealthy; showing logs"
+                            docker logs --tail=200 app-under-test || true
+                          fi
+
+                          echo "Waiting for app... (status=$status)"
+                          tries=$((tries - 1))
+                          sleep 2
+                        done
+
+                        if [ $tries -eq 0 ]; then
+                          echo "::error::App did not start. Container logs follow:"
+                          docker logs app-under-test || true
+                          exit 1
+                        fi
+
+                        # Perform HTTP GET from inside the container to avoid runner/DinD networking issues
+                        docker exec app-under-test python - <<'PY'
+              import urllib.request
+              print(urllib.request.urlopen("http://127.0.0.1:8080/").read().decode()[:300])
+              PY
+
+
   
 
