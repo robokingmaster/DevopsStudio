@@ -1,4 +1,4 @@
-name: Validate Push
+name: Validate Python Applications Changes
 
 on:
   push:
@@ -91,14 +91,13 @@ jobs:
               | head -n 1)
           fi
 
-
       - name: Print project veriables
         run: | 
           echo "project_path    => ${{ steps.locate.outputs.path }}"
           echo "project_type    => ${{ steps.locate.outputs.project_type }}"
           echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
           echo "project_version => ${{ steps.version.outputs.value }}"
-          echo "dockerfile      => ${{ steps.version.outputs.dockerfile }}
+          echo "dockerfile      => ${{ steps.version.outputs.dockerfile }}"
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |

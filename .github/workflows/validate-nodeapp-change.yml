@@ -1,4 +1,4 @@
-name: Validate Push
+name: Validate Nodejs Applications Changes
 
 on:
   push:
