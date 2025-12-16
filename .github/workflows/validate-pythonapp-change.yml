@@ -100,7 +100,6 @@ jobs:
           docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
       - name: Create Docker Network
-        if: ${{ steps.locate.outputs.launch_database == 'true' }}
         run: docker network create docker-network
 
       ## Perfoming Test Before Pushing Image
