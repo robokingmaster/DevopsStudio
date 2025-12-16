@@ -84,13 +84,6 @@ jobs:
               | head -n 1)
           fi
 
-          # 2) From OCI label org.opencontainers.image.version
-          if [ -z "$VERSION" ] && [ -n "$DOCKERFILE" ]; then
-            VERSION=$(grep -Eoi 'org\.opencontainers\.image\.version[[:space:]]*=[[:space:]]*"?([^" ]+)"?' "$DOCKERFILE" \
-              | sed -E 's/.*org\.opencontainers\.image\.version[[:space:]]*=[[:space:]]*"?([^" ]+)"?.*/\1/' \
-              | head -n 1)
-          fi
-
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
 
