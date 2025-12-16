@@ -108,7 +108,7 @@ jobs:
         run: |
           set -e
           VERSION="${{ steps.version.outputs.value }}"
-          IMAGE="${{ matrix.project }}:${VERSION}"
+          IMAGE="${{ matrix.project }}:temp"
           CID=$(docker run -d -e APP_COLOR="$APP_COLOR" -p 8080:8080 "${IMAGE}")
           # Wait a moment and then curl
           for i in {1..15}; do
