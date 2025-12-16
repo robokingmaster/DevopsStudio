@@ -97,9 +97,7 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          VERSION="${{ steps.version.outputs.value }}"
-          IMAGE="${{ matrix.project }}:${VERSION}"
-          docker build -t "${IMAGE}" ${{ steps.locate.outputs.path }}
+          docker build -t ${{ matrix.project }}:${{ steps.version.outputs.version }} ${{ steps.locate.outputs.path }}
 
       - name: Create Docker Network
         run: docker network create docker-network
@@ -113,8 +111,7 @@ jobs:
           APP_COLOR: ${{ env.APP_COLOR }}
         run: |
           set -euo pipefail
-          VERSION="${{ steps.version.outputs.value }}"
-          IMAGE="${{ matrix.project }}:${VERSION}"
+          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.version }}"
 
           # Run the container (no -p; we'll test from inside)
           docker rm -f app-under-test >/dev/null 2>&1 || true
