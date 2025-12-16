@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t ${{ matrix.project }}:${VERSION} ${{ steps.locate.outputs.path }}
+          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
 
       - name: Create Docker Network
         run: docker network create docker-network
@@ -112,7 +112,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ steps.version.outputs.value }}"
-          IMAGE="${{ matrix.project }}:${VERSION}"
+          IMAGE="${{ matrix.project }}:temp"
 
           # Run the container (no -p; we'll test from inside)
           docker rm -f app-under-test >/dev/null 2>&1 || true
