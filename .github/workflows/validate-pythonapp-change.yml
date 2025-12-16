@@ -102,6 +102,23 @@ jobs:
       - name: Create Docker Network
         run: docker network create docker-network
 
+      - name: Inspect image command
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${{ matrix.project }}:${{ steps.version.outputs.version }}"
+          echo "Entrypoint:"
+          docker image inspect "$IMAGE" --format '{{json .Config.Entrypoint}}'
+          echo "Cmd:"
+          docker image inspect "$IMAGE" --format '{{json .Config.Cmd}}'
+          echo "Dockerfile lines (CMD/ENTRYPOINT):"
+          PROJECT_PATH="${{ steps.locate.outputs.path }}"
+          DOCKERFILE="${PROJECT_PATH}/Dockerfile"
+          if [ -f "$DOCKERFILE" ]; then
+            grep -niE '^(ENTRYPOINT|CMD)\b' "$DOCKERFILE" || true
+          else
+            echo "No Dockerfile      echo "No Dockerfile at $DOCKERFILE"
+
       ## Perfoming Test Before Pushing Image
       # Starts container with APP_COLOR and curls the home page to ensure a 200 response.
 

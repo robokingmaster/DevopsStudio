@@ -44,4 +44,4 @@ ENV APP_COLOR=steelblue
 
 # Use Gunicorn as a production server
 # -w: workers; -b: bind address
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8080", "app:app"]
