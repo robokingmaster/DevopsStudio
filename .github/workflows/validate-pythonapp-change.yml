@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Docker image for ${{ matrix.project }}
         run: |
-          docker build -t ${{ matrix.project }}:temp ${{ steps.locate.outputs.path }}
+          docker build -t ${{ matrix.project }}:${VERSION} ${{ steps.locate.outputs.path }}
 
       - name: Create Docker Network
         run: docker network create docker-network
