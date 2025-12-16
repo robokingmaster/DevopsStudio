@@ -91,12 +91,15 @@ jobs:
               | head -n 1)
           fi
 
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
+
       - name: Print project veriables
         run: | 
           echo "project_path    => ${{ steps.locate.outputs.path }}"
           echo "project_type    => ${{ steps.locate.outputs.project_type }}"
           echo "launch_database => ${{ steps.locate.outputs.launch_database }}"
-          echo "project_version => ${{ steps.version.outputs.value }}"
+          echo "project_version => ${{ steps.version.outputs.version }}"
           echo "dockerfile      => ${{ steps.version.outputs.dockerfile }}"
 
       - name: Build Docker image for ${{ matrix.project }}
