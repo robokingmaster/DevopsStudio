@@ -6,6 +6,9 @@ on:
       - 'main'
     paths:
       - 'samples-nodejs/**'
+    paths-ignore:
+      - 'samples-nodejs/playground/**'
+      - 'samples-nodejs/nodejs-static/**'      
     types:
       - closed
 env:
