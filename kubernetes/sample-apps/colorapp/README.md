@@ -1,5 +1,5 @@
 ## Deploying Sample Color App in Kubernetes
-This is an sample web appliction written using python and flask. 
+This is an sample web application written using python and flask. 
 It display an webpage with APP_COLOR name and host name where the application is running.
 
 Here is a screenshot of the application:
