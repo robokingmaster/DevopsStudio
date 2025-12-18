@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: robokingmaster/examples:colorapp
+        image: robokingmaster/colorapp:1.0.0
         ports:
         - containerPort: 8080
         env:
