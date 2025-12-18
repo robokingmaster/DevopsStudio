@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'samples-nodejs/**'
+    paths-ignore:
+      - 'samples-nodejs/playground/**'
+      - 'samples-nodejs/nodejs-static/**'
 
 env:
   APP_ENV: devlopment
